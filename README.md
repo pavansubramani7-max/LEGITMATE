@@ -10,7 +10,7 @@ LEGITMATE is a local research prototype for exploring evidence in property and c
 
 Property and civil document review requires finding relevant statements across files while preserving where each statement came from. LEGITMATE is a local-first neuro-symbolic research prototype for property and civil document understanding, evidence–claim review, temporal graph exploration, and Hybrid GraphRAG. It extracts text and source locations from supported documents, divides text into traceable passages, and retrieves evidence with BM25, multilingual E5 embeddings, reciprocal-rank fusion, optional cross-encoder reranking, and bounded graph expansion. Rule-based components identify candidate people, organizations, property identifiers, dates, amounts, and claims. Claims are labeled as source-text matched or unmatched; a match confirms provenance, not truth. The read-only graph links exact normalized multi-token entity mentions across documents and keeps date-order edges within each source document. Possible conflicts and event cues remain review signals, not legal conclusions. An optional AI provider can draft responses from retrieved excerpts; external AI is disabled by default. Separate local account workspaces isolate each account’s files and indexes inside the application.
 
-The NLP Studio contains foundational NLP demonstrations and a small GRU classifier with additive attention, trained on synthetic teaching snippets rather than legal records. Evaluation currently uses synthetic samples: the expanded 50-question retrieval set found a labeled passage in the top five for all 30 answerable questions, but unsupported-query abstention remained poor (0.000–0.200 across modes). The extraction sample matched its small hand-labeled set, but this does not establish performance on real documents. The GRU scored 0.750 on 12 held-out synthetic examples and is not connected to document answers. No target-domain fine-tuned legal model is deployed. LEGITMATE demonstrates an auditable evidence workflow, not validated legal reasoning or production-grade accuracy.
+The NLP Studio contains foundational NLP demonstrations and selectable CNN, vanilla RNN, GRU, and LSTM classifiers trained on synthetic teaching snippets rather than legal records. Evaluation currently uses synthetic samples: the expanded 50-question retrieval set found a labeled passage in the top five for all 30 answerable questions, but unsupported-query abstention remained poor (0.000–0.200 across modes). The extraction sample matched its small hand-labeled set, but this does not establish performance on real documents. On 12 held-out synthetic examples, GRU and CNN scored 0.750, RNN 0.417, and LSTM 0.583. These models are not connected to document answers. No target-domain fine-tuned legal model is deployed. LEGITMATE demonstrates an auditable evidence workflow, not validated legal reasoning or production-grade accuracy.
 
 ## At a glance
 
@@ -19,7 +19,7 @@ The NLP Studio contains foundational NLP demonstrations and a small GRU classifi
 | Document processing | PDF, DOCX/DOCM, PPTX, XLSX, TXT, Markdown, CSV, JSON, HTML, and RTF; up to 200 MB per file |
 | Text search | BM25 with legal query synonyms, multilingual E5 semantic retrieval, hybrid RRF, optional cross-encoder reranking |
 | Evidence analysis | Source-text claim matching, human claim-to-evidence judgments with selected source-item references, candidate facts, heuristic date/amount conflicts, typed date cues and explicit ranges, timeline, provenance graph, extractive case brief |
-| NLP learning | Tokenization, rule-based POS/lemma, BoW, TF-IDF, n-grams/perplexity, overlap metrics, GRU + attention demo |
+| NLP learning | Tokenization, optional spaCy POS/lemma, BoW, TF-IDF, n-grams/perplexity, overlap metrics, CNN/RNN/GRU/LSTM teaching demos |
 | Optional services | Local Tesseract OCR for selected installed languages; Gemini or Groq chat/drafting when explicitly configured |
 | Data separation | Separate local account folders and indexes for admin and customer workspaces; matter filters within each account |
 | Case organization | Matter workspaces scope search, evidence review, conflicts, dates, graph, brief, and export |
@@ -27,7 +27,7 @@ The NLP Studio contains foundational NLP demonstrations and a small GRU classifi
 | Deployment posture | Authenticated readiness checklist; explicitly reports missing production safeguards and independent validation |
 | Evidence integrity | Ingestion-time SHA-256 for new uploads, source verification at export, and an account-local hash-chained metadata audit ledger |
 | Research workflow | Blind two-reviewer JSONL preparation, field-level agreement comparison, adjudication validation, and held-out scoring CLI |
-| Fine-tuned legal model | None deployed; the GRU is a small synthetic teaching classifier, not part of legal document QA |
+| Fine-tuned legal model | None deployed; the neural sequence classifiers are synthetic teaching demos, not part of legal document QA |
 
 ## How LEGITMATE works
 
@@ -52,7 +52,7 @@ The NLP Studio contains foundational NLP demonstrations and a small GRU classifi
 - Blind two-reviewer annotation preparation, agreement summaries, adjudication worksheet validation, matter-group split checks, and a handoff to the reviewed-corpus evaluator are available in `app.evaluation.annotation_workbench`.
 - Readiness & limits panel reports local configuration and production blockers without exposing credentials.
 - Separate admin and customer workspaces, protected account management, signed sessions, and CSRF checks.
-- NLP Studio learning examples and a synthetic GRU + additive-attention sequence demo.
+- NLP Studio learning examples and a selectable CNN/RNN/GRU/LSTM synthetic sequence-model comparison.
 
 ## System outline
 
@@ -67,7 +67,7 @@ Browser UI
        └─ Optional AI provider → draft/chat text only when selected
 ```
 
-The symbolic parts are the transparent extraction rules, source matching, review states, and graph/conflict links. The neural parts are the pretrained E5 encoder, optional cross-encoder reranker, and the separate synthetic GRU teaching demo. The app does not use the GRU to answer questions about uploaded legal documents.
+The symbolic parts are the transparent extraction rules, source matching, review states, and graph/conflict links. The neural parts are the pretrained E5 encoder, optional cross-encoder reranker, and separate synthetic sequence-model teaching demos. The app does not use these classroom models to answer questions about uploaded legal documents.
 
 ## Requirements
 
@@ -154,7 +154,7 @@ OCR is opt-in and uses Tesseract on this computer; document content is not sent 
 | Cross-encoder | Optionally reorders hybrid candidates with `cross-encoder/ms-marco-MiniLM-L-2-v2` | General passage ranking, not property-law trained |
 | Graph expansion | Adds bounded passages when a query names an extracted entity/property; exact normalized multi-token mentions can connect documents | Exact text matching only; no alias resolution or unrestricted graph traversal. Graph links do not manufacture relevance scores |
 
-E5 and the cross-encoder are pretrained retrieval models. LEGITMATE has no validated fine-tuned app model. The small GRU model described below is separate from document retrieval and question answering.
+E5 and the cross-encoder are pretrained retrieval models. LEGITMATE has no validated fine-tuned app model. The small sequence models described below are separate from document retrieval and question answering.
 
 ## NLP Studio and CS3250 syllabus coverage
 
@@ -164,17 +164,17 @@ The NLP Studio contains these local demonstrations:
 - Bag-of-Words, TF-IDF, bigrams, and smoothed unigram/bigram perplexity.
 - BLEU-4, ROUGE-L, precision, recall, and F1 from user-provided reference/candidate text. These measure text overlap, not legal correctness.
 - Indic writing-system counts and a lightweight language estimate.
-- A GRU sequence classifier with additive attention. It predicts one broad topic cue: party, date, amount, obligation, property, or other. The model was CPU-trained on 72 synthetic classroom snippets, with 12 separate synthetic validation examples. The recorded validation accuracy is 0.750. Its scores and attention weights are not legal confidence, explanations, evidence, or source citations.
+- A selectable CNN, vanilla RNN, GRU, and LSTM sequence-model comparison. The models predict one broad topic cue from a tiny synthetic classroom set (72 training / 12 held-out validation snippets); current validation accuracies are GRU 0.750, CNN 0.750, RNN 0.417, and LSTM 0.583. Scores and pooling weights are not legal confidence, explanations, evidence, or source citations.
 
-The GRU model is not used for document answers. CNN, vanilla RNN, LSTM, Word2Vec/GloVe/FastText checkpoints and tasks, separate ELMo/BERT/RoBERTa/ALBERT/GPT/T5 NLP Studio tasks, legal-domain fine-tuning, Whisper/Wav2Vec, CLIP, full IndicNLP, translation, and production abstractive summarization remain incomplete. The Studio now separates runtime availability, checkpoint presence, and connected tasks, and gives copyable next steps where setup is meaningful. See [docs/nlp-studio.md](docs/nlp-studio.md) for the module-by-module map.
+These teaching classifiers are not used for document answers. Word2Vec/GloVe/FastText checkpoints and tasks, separate ELMo/BERT/RoBERTa/ALBERT/GPT/T5 NLP Studio tasks, legal-domain fine-tuning, Whisper/Wav2Vec, CLIP, full IndicNLP, translation, and production abstractive summarization remain incomplete. The Studio separates runtime availability, checkpoint presence, and connected tasks, and gives copyable next steps where setup is meaningful. See [docs/nlp-studio.md](docs/nlp-studio.md) for the module-by-module map.
 
-To retrain the GRU teaching model with its fixed seed:
+To retrain the sequence teaching models with their fixed seed:
 
 ```powershell
 .venv\Scripts\python.exe data\pipeline\train_gru_sequence_demo.py
 ```
 
-This overwrites `models/gru-sequence-demo.pt` with weights trained only on the synthetic training split in `data/evaluation/sequence_demo_cases_v1.json`. It does not fine-tune the legal retrieval model.
+This creates checkpoints for GRU, CNN, vanilla RNN, and LSTM using only the synthetic training split in `data/evaluation/sequence_demo_cases_v1.json`. It does not fine-tune the legal retrieval model.
 
 ## Evaluation and measured results
 
@@ -209,7 +209,7 @@ An annotation guide and runnable evaluator for a future independently reviewed c
 
 Date extraction assigns transparent event cues and links interval endpoints only for explicit “from … to …” or “between … and …” phrasing. Those cues preserve source context; they do not establish that an interval is legally operative. Timeline ordering and graph date links remain exploratory.
 
-The GRU teaching set measured 1.000 training accuracy and 0.750 accuracy on 12 held-out synthetic examples. This is not a property/civil accuracy estimate.
+The sequence models were trained on 72 synthetic examples and measured on 12 held-out synthetic examples. They reached GRU 0.750, CNN 0.750, RNN 0.417, and LSTM 0.583 accuracy; these are not property/civil accuracy estimates.
 
 The separate legacy API evaluation requires the app server and the three sample PDFs uploaded in the active workspace:
 
@@ -250,7 +250,7 @@ The browser uses the FastAPI service. Most workspace endpoints require a signed-
 | Evidence handoff | `GET /api/evidence-matrix`, `GET /api/case-bundle` | Claim review matrix and downloadable case bundle; pass `matter_id` to scope it; `include_sources=true` adds available originals (up to 1 GB) |
 | Deployment posture | `GET /api/deployment-readiness` | Non-secret local configuration checklist; production readiness remains false |
 | Audit integrity | `GET /api/audit-log/integrity` | Verifies the account-local event chain; returns integrity metadata only |
-| NLP Studio | `GET /api/nlp-lab/status`, `POST /api/nlp-lab/analyze`, `POST /api/nlp-lab/metrics`, `POST /api/nlp-lab/sequence-demo` | Syllabus status, local analysis, overlap metrics, GRU demo |
+| NLP Studio | `GET /api/nlp-lab/status`, `POST /api/nlp-lab/analyze`, `POST /api/nlp-lab/metrics`, `POST /api/nlp-lab/sequence-demo` | Syllabus status, local analysis, overlap metrics, selectable CNN/RNN/GRU/LSTM teaching demo |
 | Benchmarks | `GET /api/evaluation/property-civil` | Saved synthetic retrieval benchmark summary |
 
 For request schemas, see the FastAPI interactive docs at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) after starting the server and signing in where required.
@@ -265,7 +265,7 @@ For request schemas, see the FastAPI interactive docs at [http://127.0.0.1:8000/
 | Scanned PDF has no text | Install Tesseract + English data, restart the server, and select local OCR for that PDF |
 | Semantic model appears unavailable | Check whether its package and weights exist in the active Python environment/cache; BM25 remains available |
 | Gemini/Groq is slow or unavailable | Check provider configuration, account quota, network access, and selected model; local document retrieval remains usable |
-| GRU demo checkpoint is missing | Run the training command in the NLP Studio section to create `models/gru-sequence-demo.pt` |
+| Sequence demo checkpoint is missing | Run the training command in the NLP Studio section to create the CNN/RNN/GRU/LSTM teaching checkpoints |
 | A result looks wrong | Open the cited passage and inspect the original page; candidate extraction and language detection can be wrong |
 
 ## Useful commands
@@ -278,7 +278,7 @@ For request schemas, see the FastAPI interactive docs at [http://127.0.0.1:8000/
 | Retrieval benchmark | `.venv\Scripts\python.exe -m app.evaluation.property_civil_benchmark` |
 | Extraction benchmark | `.venv\Scripts\python.exe -m app.evaluation.extraction_benchmark` |
 | Account isolation check | `.venv\Scripts\python.exe -m app.evaluation.workspace_isolation_check` |
-| Train/retrain GRU demo | `.venv\Scripts\python.exe data\pipeline\train_gru_sequence_demo.py` |
+| Train/retrain sequence teaching demos | `.venv\Scripts\python.exe data\pipeline\train_gru_sequence_demo.py` |
 | Legacy API evaluation | `.venv\Scripts\python.exe -m app.evaluation.evaluate` |
 
 ## Repository map
@@ -292,11 +292,11 @@ app/ingestion/                      File readers and passage chunking
 app/extraction/                     Candidate entities, dates, and claims
 app/search/, app/retrieval/         BM25, semantic search, fusion, reranking
 app/evidence/                       Provenance, conflicts, timeline, graph, case brief
-app/nlp/                            NLP Studio and GRU-attention demo
+app/nlp/                            NLP Studio and sequence-model teaching demos
 app/evaluation/                     Offline retrieval, extraction, and isolation checks
 data/sample/                        Synthetic demonstration PDFs
 data/evaluation/                    Versioned synthetic benchmark labels
-data/pipeline/                      Dataset preparation and GRU demo training scripts
+data/pipeline/                      Dataset preparation and sequence-demo training scripts
 data/raw/, data/processed/          Separate research corpora and derived outputs
 models/gru-sequence-demo.pt         Synthetic GRU teaching checkpoint
 docs/                               Architecture, demo, datasets, limitations, evaluation

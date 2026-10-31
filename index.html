@@ -1051,6 +1051,7 @@ body{font-size:18px;line-height:1.7;color:#26354a;}
 .sequence-prediction .lab-table-title{margin:0;color:#f0d9b1;}
 .sequence-prediction strong{font-size:20px;text-transform:capitalize;}
 .sequence-token-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:8px;}
+.sequence-controls{flex-wrap:wrap}.sequence-controls select{min-width:170px;max-width:260px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:14px 'Times New Roman',serif}
 .sequence-token{display:grid;grid-template-columns:minmax(50px,.7fr) minmax(45px,1fr) 45px;align-items:center;gap:8px;padding:8px 10px;border:1px solid #eee5e9;border-radius:9px;background:#fff;}
 .sequence-token strong{overflow-wrap:anywhere;color:#3d3440;font-size:14px;}
 .sequence-token small{text-align:right;color:#6e6870;font-size:12px;}
@@ -1905,14 +1906,14 @@ dialog::backdrop{background:rgba(35,9,26,.68);backdrop-filter:blur(11px) saturat
     </div>
 
     <section class="lab-card sequence-demo-card" style="margin-bottom:16px">
-      <div class="lab-card-head"><h2>03 · GRU sequence classifier + attention</h2><span class="badge badge-local">Trained local demo</span></div>
+      <div class="lab-card-head"><h2>03 · Neural sequence model comparison</h2><span class="badge badge-local">Local teaching demos</span></div>
       <div class="lab-card-body">
-        <p class="lab-subtitle">Enter one short sentence. A small GRU classifies it into a broad topic cue and shows token-attention weights. It was trained on synthetic classroom examples, not legal case documents.</p>
+        <p class="lab-subtitle">Compare small CNN, vanilla RNN, GRU, and LSTM models on the same six-way topic-cue task. The checkpoints use synthetic classroom examples and are not legal classifiers or document evidence.</p>
         <form id="sequenceDemoForm">
-          <textarea id="sequenceDemoInput" maxlength="1000" aria-label="Sentence for the GRU sequence demo">The tenant shall pay monthly rent of Rs 25000.</textarea>
-          <div class="lab-form-row"><span class="lab-subtitle">Up to 1,000 characters</span><button class="btn btn-primary" type="submit" id="sequenceDemoBtn">Classify sentence</button></div>
+          <textarea id="sequenceDemoInput" maxlength="1000" aria-label="Sentence for the neural sequence model demo">The tenant shall pay monthly rent of Rs 25000.</textarea>
+          <div class="lab-form-row sequence-controls"><label class="lab-subtitle" for="sequenceArchitecture">Model architecture</label><select id="sequenceArchitecture" aria-label="Choose sequence model"><option value="gru">GRU + additive attention</option><option value="cnn">Text CNN</option><option value="rnn">Vanilla RNN</option><option value="lstm">LSTM</option></select><span class="lab-subtitle">Up to 1,000 characters</span><button class="btn btn-primary" type="submit" id="sequenceDemoBtn">Classify sentence</button></div>
         </form>
-        <div id="sequenceDemoOutput" class="lab-output" aria-live="polite"><div class="empty-state"><p>Run the GRU demo to see a topic prediction and token-attention display.</p></div></div>
+        <div id="sequenceDemoOutput" class="lab-output" aria-live="polite"><div class="empty-state"><p>Choose an architecture and classify a sentence to compare the local model outputs.</p></div></div>
       </div>
     </section>
 
@@ -1920,7 +1921,7 @@ dialog::backdrop{background:rgba(35,9,26,.68);backdrop-filter:blur(11px) saturat
       <div class="lab-card-head"><h2>04 · Model and toolkit readiness</h2><button class="btn btn-secondary btn-sm" type="button" onclick="loadNlpLab()">Refresh status</button></div>
       <div class="lab-card-body"><p class="lab-subtitle">The cards distinguish a working demo from a package being installed and from a model that still needs weights or training.</p><div id="nlpCapabilities"><div class="empty-state"><p>Checking local model setup…</p></div></div></div>
     </section>
-    <p class="lab-note">Important: this NLP Studio uses a small rule-based POS and lemmatization approximation for transparent classroom examples. It does not pretend those rules are a trained spaCy model. The app’s pretrained retrieval model, if available in this environment, is separate from model fine-tuning.</p>
+    <p class="lab-note">Pipeline transparency: tokenization, POS, and lemmas use a compatible local spaCy pipeline only when that language model is installed and loaded; otherwise the analyzer labels its transparent rule fallback. Sequence classifiers are tiny synthetic teaching models, not legal models. The app’s pretrained retrieval model is a separate system from these classroom demonstrations and from model fine-tuning.</p>
   </div>
 
 </main>
@@ -2264,7 +2265,7 @@ async function loadNlpLab() {
     const r = await apiFetch('/api/nlp-lab/status');
     const d = await r.json();
     const working = (d.working_now || []).map(x => `<div class="lab-model"><strong>${esc(x.name)}</strong><p>${esc(x.detail)}</p><span class="badge badge-local">Ready locally</span></div>`).join('');
-    const labels = {active_pipeline:'Active local pipeline',runtime_only:'Runtime only · no connected task',not_installed:'Runtime not installed'};
+    const labels = {active_pipeline:'Task connected · checkpoint ready',runtime_only:'Runtime only · no connected task',not_installed:'Runtime not installed'};
     const optional = (d.optional_models || []).map(x => {
       const state = x.state || (x.runtime ? 'runtime_only' : 'not_installed');
       const className = state === 'active_pipeline' ? '' : state === 'runtime_only' ? 'runtime' : 'missing';
@@ -2450,18 +2451,19 @@ document.getElementById('sequenceDemoForm').addEventListener('submit', async e =
   const out = document.getElementById('sequenceDemoOutput');
   const btn = document.getElementById('sequenceDemoBtn');
   btn.disabled = true; btn.textContent = 'Classifying…';
-  out.innerHTML = '<div class="empty-state"><p>Running the local GRU model…</p></div>';
+  out.innerHTML = '<div class="empty-state"><p>Running the selected local model…</p></div>';
   try {
-    const r = await apiFetch('/api/nlp-lab/sequence-demo', {method:'POST', json:{text:document.getElementById('sequenceDemoInput').value}});
+    const architecture = document.getElementById('sequenceArchitecture').value;
+    const r = await apiFetch('/api/nlp-lab/sequence-demo', {method:'POST', json:{text:document.getElementById('sequenceDemoInput').value, architecture}});
     const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not run the GRU demo');
+    if (!r.ok) throw new Error(d.detail || 'Could not run the selected model demo');
     const maxWeight = Math.max(0.0001, ...(d.tokens || []).map(token => Number(token.attention) || 0));
     const tokenBars = (d.tokens || []).map(token => {
       const attention = Math.max(0, Number(token.attention) || 0);
       const barWidth = Math.max(2, Math.round(attention / maxWeight * 100));
       return `<div class="sequence-token"><strong>${esc(token.text)}</strong><span class="sequence-attention-track"><i style="width:${barWidth}%"></i></span><small>${(attention * 100).toFixed(1)}%</small></div>`;
     }).join('');
-    out.innerHTML = `<div class="sequence-result"><div class="sequence-prediction"><span class="lab-table-title">Predicted topic cue</span><strong>${esc(d.prediction)}</strong></div><div class="lab-stat-cards"><div class="lab-stat-card"><strong>${(Number(d.score) * 100).toFixed(1)}%</strong><span>Model score · not confidence</span></div><div class="lab-stat-card"><strong>${(Number(d.validation_accuracy) * 100).toFixed(1)}%</strong><span>Held-out toy-set accuracy</span></div></div><div><h3 class="lab-table-title">Token attention · relative bar, normalized weight</h3><div class="sequence-token-list">${tokenBars}</div></div><p class="lab-subtitle sequence-disclaimer">${esc(d.notice || '')}</p></div>`;
+    out.innerHTML = `<div class="sequence-result"><div class="sequence-prediction"><span class="lab-table-title">${esc(d.model || 'Selected architecture')} · predicted topic cue</span><strong>${esc(d.prediction)}</strong></div><div class="lab-stat-cards"><div class="lab-stat-card"><strong>${(Number(d.score) * 100).toFixed(1)}%</strong><span>Model score · not confidence</span></div><div class="lab-stat-card"><strong>${(Number(d.validation_accuracy) * 100).toFixed(1)}%</strong><span>Held-out synthetic accuracy</span></div></div><div><h3 class="lab-table-title">Token attention pooling · normalized model weights, not explanations</h3><div class="sequence-token-list">${tokenBars}</div></div><p class="lab-subtitle sequence-disclaimer">${esc(d.notice || '')}</p></div>`;
   } catch (err) { out.innerHTML = `<div class="alert alert-error">${esc(err.message)}</div>`; }
   finally { btn.disabled = false; btn.textContent = 'Classify sentence'; }
 });

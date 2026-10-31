@@ -55,7 +55,7 @@ from app.qa.summary import build_case_brief
 from app.qa.ai_provider import generate_chat_reply, generate_grounded_answer, generate_general_reply, provider_status, is_general_chat
 from app.nlp.language import detect_language
 from app.nlp.lab import analyze_text, evaluate_text, capability_status
-from app.nlp.sequence_demo import classify_sequence
+from app.nlp.sequence_demo import classify_sequence, model_status as sequence_model_status
 from app.reports import render_document_report
 from app.schemas import SearchRequest, ReviewPatch, ManualItemRequest, LanguageRequest, MatterCreateRequest, MatterPatchRequest, DocumentMatterPatch
 from app.evaluation.deployment_readiness import readiness_report
@@ -564,6 +564,7 @@ class NLPCompareRequest(BaseModel):
 
 class SequenceDemoRequest(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
+    architecture: str = Field(default="gru", pattern="^(gru|cnn|rnn|lstm)$")
 
 
 @app.post("/api/login")
@@ -833,7 +834,7 @@ def nlp_lab_metrics(req: NLPCompareRequest, _session: str = Depends(require_sess
 @app.post("/api/nlp-lab/sequence-demo")
 def nlp_lab_sequence_demo(req: SequenceDemoRequest, _session: str = Depends(require_session)) -> dict[str, Any]:
     try:
-        return classify_sequence(req.text)
+        return classify_sequence(req.text, req.architecture)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     except RuntimeError as exc:

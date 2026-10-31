@@ -13,6 +13,7 @@ from app.nlp.language import detect_language
 from app.store import load
 from app.extraction.entities import extract_entities
 from app.extraction.ner_model import get_nlp_for_language, spacy_model_name
+from app.nlp.sequence_demo import model_status as sequence_model_status
 from app.config import ROOT
 
 _TOKEN_RE = re.compile(r"\w+(?:['’.-]\w+)*|[^\w\s]", re.UNICODE)
@@ -204,6 +205,8 @@ def capability_status() -> dict[str, Any]:
     spacy_model = spacy_model_name("en")
     spacy_runtime = available("spacy")
     spacy_pipeline = get_nlp_for_language("en") if spacy_runtime else None
+    sequence_models = sequence_model_status()
+    sequence_task_active = bool(sequence_models["task_connected"])
     report_path = ROOT / "data" / "processed" / "kaggle_legal" / "dataset_report.json"
     report: dict[str, Any] = {}
     try:
@@ -251,9 +254,9 @@ def capability_status() -> dict[str, Any]:
         {
             "id": "module-2", "title": "Deep Learning for Text Processing", "coverage": "Partial",
             "topics": [
-                {"name": "GRU sequence classifier", "status": "Demo available", "detail": "A small CPU-trained GRU classifies six broad topic cues from synthetic teaching snippets; this is not a legal classifier."},
-                {"name": "Attention mechanism", "status": "Demo available", "detail": "The GRU demo visualizes additive token-attention weights as model signals, not explanations or evidence."},
-                {"name": "CNN, vanilla RNN, LSTM", "status": "Not implemented", "detail": "These architectures remain unbuilt; PyTorch being installed does not mean their tasks are implemented."},
+                {"name": "GRU, CNN, vanilla RNN, and LSTM sequence classifiers", "status": "Demo available", "detail": "Selectable CPU-trained architecture teaching demos classify six broad topic cues using the same synthetic split; they are not legal classifiers."},
+                {"name": "Attention pooling", "status": "Demo available", "detail": "The sequence demos expose normalized pooling weights as model signals, not explanations or evidence."},
+                {"name": "CNN, vanilla RNN, LSTM", "status": "Trained teaching demos" if sequence_task_active else "Training needed", "detail": "The Studio offers selectable CNN, vanilla RNN, LSTM, and GRU classifiers trained on the included synthetic classroom split. They are demonstrations, not legal classifiers."},
                 {"name": "BLEU, ROUGE, precision, recall, F1", "status": "Demo available", "detail": "Text-overlap metrics run when a user supplies a reference and candidate answer; they do not measure legal correctness."},
             ],
         },
@@ -290,14 +293,14 @@ def capability_status() -> dict[str, Any]:
             {"name": "Tokenization + legal entity extraction", "status": "ready", "detail": "Runs locally on text you enter; extracted entities are candidate suggestions."},
             {"name": "BoW, TF-IDF, N-grams + perplexity", "status": "ready", "detail": "Calculated locally; TF-IDF uses the text and up to 300 indexed passages."},
             {"name": "BLEU, ROUGE-L, Precision, Recall, F1", "status": "ready", "detail": "Compare a candidate answer with a reference answer."},
-            {"name": "GRU + additive attention sequence demo", "status": "ready", "detail": "Classifies a short teaching sentence and displays token-attention weights. A tiny synthetic model, not legal evidence."},
+            {"name": "CNN / RNN / GRU / LSTM comparison", "status": "ready" if sequence_task_active else "training_needed", "detail": "Select a locally trained sequence architecture to classify a short teaching sentence and inspect pooling weights. Tiny synthetic models, not legal evidence."},
             {"name": "Source-linked extractive case brief", "status": "ready", "detail": "Ranks exact sentences from the local document index, attaches file/page citations, lists candidate facts and dates, and shows open conflicts without choosing a winner. No AI provider call."},
             {"name": "Indic script profile", "status": "ready", "detail": "Counts Unicode writing systems and estimates common script; not a full IndicNLP pipeline."},
         ],
         "optional_models": [
             {"name": "spaCy POS + lemmatization", "state": "active_pipeline" if spacy_pipeline is not None else "runtime_only" if spacy_runtime else "not_installed", "runtime": spacy_runtime, "checkpoint": bool(spacy_pipeline), "task_connected": bool(spacy_pipeline), "model_name": spacy_model, "detail": "English pipeline can run POS, lemmatization, and tokenization on detected English text." if spacy_pipeline is not None else "A spaCy package alone is insufficient; install the language model to activate trained POS and lemma output." if spacy_runtime else "Install spaCy and its English model to activate the trained pipeline.", "setup_command": "python -m pip install spacy\npython -m spacy download en_core_web_sm" if spacy_pipeline is None else ""},
             {"name": "Word2Vec / GloVe / FastText", "state": "runtime_only" if available("gensim") else "not_installed", "runtime": available("gensim"), "checkpoint": False, "task_connected": False, "detail": "No trained/pretrained vector checkpoint or nearest-neighbour exercise is connected; gensim installation alone does not activate embeddings.", "setup_command": "python -m pip install gensim\n# Then train on an approved research corpus or provide a licensed pretrained vector file." if not available("gensim") else "# No connected model or exercise yet; the installed package alone is not an embedding model."},
-            {"name": "CNN / vanilla RNN / LSTM", "state": "runtime_only" if available("torch") else "not_installed", "runtime": available("torch"), "checkpoint": False, "task_connected": False, "detail": "PyTorch runtime status is separate from architecture training. LEGITMATE has no trained CNN, RNN, or LSTM task checkpoint.", "setup_command": "# No setup command: a task, labeled data, training, and held-out evaluation must be implemented first."},
+            {"name": "CNN / vanilla RNN / LSTM", "state": "active_pipeline" if sequence_task_active else "runtime_only" if available("torch") else "not_installed", "runtime": available("torch"), "checkpoint": all(model["trained_weights"] for model in sequence_models["architectures"] if model["architecture"] != "gru") if sequence_task_active else False, "task_connected": sequence_task_active, "detail": "Selectable CNN, vanilla RNN, LSTM, and GRU classifiers are connected in the NLP Studio. Checkpoints use only a tiny synthetic teaching set; they are not legal classifiers." if sequence_task_active else "PyTorch runtime is present; run the local teaching-model training script to create the architecture checkpoints.", "setup_command": "" if sequence_task_active else ".venv\\Scripts\\python.exe data\\pipeline\\train_gru_sequence_demo.py"},
             {"name": "Whisper speech recognition", "state": "runtime_only" if available("faster_whisper") or available("whisper") else "not_installed", "runtime": available("faster_whisper") or available("whisper"), "checkpoint": False, "task_connected": False, "detail": "No audio upload/transcription route or downloaded speech checkpoint is connected. Audio stays out of legal document processing.", "setup_command": "python -m pip install faster-whisper\n# A compatible speech model must be downloaded before transcription; no ASR task is connected yet." if not available("faster_whisper") else "# Runtime may exist; a local model and a reviewed transcription workflow are still absent."},
             {"name": "CLIP image-text", "state": "runtime_only" if available("transformers") and available("torch") else "not_installed", "runtime": available("transformers") and available("torch"), "checkpoint": False, "task_connected": False, "detail": "Transformers and PyTorch are runtime dependencies only; no CLIP checkpoint or document-image matching task is connected.", "setup_command": "python -m pip install transformers\n# Add a compatible CLIP checkpoint and an image-text evaluation before enabling the task." if not (available("transformers") and available("torch")) else "# Runtime exists; no compatible local CLIP checkpoint or image-text task is connected."},
             {"name": "IndicNLP tools", "state": "runtime_only" if available("indicnlp") else "not_installed", "runtime": available("indicnlp"), "checkpoint": False, "task_connected": False, "detail": "Automatic script profiling is active. IndicNLP normalization/tokenization is not connected and requires its package plus language resources.", "setup_command": "python -m pip install indic-nlp-library\n# Add Indic language resources and a reviewed normalization/tokenization exercise." if not available("indicnlp") else "# Toolkit runtime exists; IndicNLP-specific processing is not connected."},
