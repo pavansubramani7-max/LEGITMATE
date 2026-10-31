@@ -166,7 +166,7 @@ The NLP Studio contains these local demonstrations:
 - Indic writing-system counts and a lightweight language estimate.
 - A selectable CNN, vanilla RNN, GRU, and LSTM sequence-model comparison. The models predict one broad topic cue from a tiny synthetic classroom set (72 training / 12 held-out validation snippets); current validation accuracies are GRU 0.750, CNN 0.750, RNN 0.417, and LSTM 0.583. Scores and pooling weights are not legal confidence, explanations, evidence, or source citations.
 
-These teaching classifiers are not used for document answers. Word2Vec/GloVe/FastText checkpoints and tasks, separate ELMo/BERT/RoBERTa/ALBERT/GPT/T5 NLP Studio tasks, legal-domain fine-tuning, Whisper/Wav2Vec, CLIP, full IndicNLP, translation, and production abstractive summarization remain incomplete. The Studio separates runtime availability, checkpoint presence, and connected tasks, and gives copyable next steps where setup is meaningful. See [docs/nlp-studio.md](docs/nlp-studio.md) for the module-by-module map.
+These teaching classifiers are not used for document answers. Word2Vec/GloVe/FastText, separate ELMo/BERT/RoBERTa/ALBERT/GPT/T5 NLP Studio tasks, legal-domain fine-tuning, Whisper/Wav2Vec, CLIP, full IndicNLP, translation, and production abstractive summarization are not integrated. See [docs/nlp-studio.md](docs/nlp-studio.md) for the module-by-module map.
 
 To retrain the sequence teaching models with their fixed seed:
 

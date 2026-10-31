@@ -7,6 +7,7 @@
 3. Use **Analyze a text** for tokenization and linguistic/statistical demos.
 4. Use **Compare answer quality** to compare a reference and candidate answer.
 5. Use **Neural sequence model comparison** to run the CNN, vanilla RNN, GRU, or LSTM on one short teaching sentence.
+6. Review the research-corpus inventory separately from the uploaded-document workspace.
 
 The entered text for these two local demonstrations is processed by the LEGITMATE server. These tools do not call Gemini/Groq and do not modify uploaded documents or `data/index.json`.
 
@@ -24,7 +25,7 @@ The entered text for these two local demonstrations is processed by the LEGITMAT
 
 ### Optional local linguistic pipeline
 
-The Model and Toolkit Readiness cards distinguish the package runtime from an installed model checkpoint and from a task connected in LEGITMATE. To add the English spaCy pipeline to the active virtual environment, run these commands from the project folder in PowerShell:
+The analyzer output identifies whether it used spaCy or the transparent fallback. To optionally add the English spaCy pipeline to the active virtual environment, run these commands from the project folder in PowerShell:
 
 ```powershell
 python -m pip install spacy
@@ -33,7 +34,7 @@ python -m spacy download en_core_web_sm
 
 Restart LEGITMATE afterward and refresh NLP Studio. Analysis reports the selected spaCy model or explicitly reports the rule fallback. The optional installation does not download models automatically, change uploaded files, or promote extracted entities to verified facts.
 
-Other cards provide copyable setup/next-step commands. The PyTorch card is connected to the four synthetic sequence teaching demonstrations below; it does not imply that any of those models is suitable for legal analysis. Installing gensim, Whisper, Transformers, or IndicNLP does not by itself create a connected model task. The app reports missing checkpoints and tasks separately; no architecture is presented as working just because its package is installed.
+The four sequence architectures below are connected to small synthetic teaching tasks; this does not imply that they are suitable for legal analysis. Installing gensim, Whisper, Transformers, or IndicNLP alone does not provide an integrated model task.
 
 To reproducibly retrain all four teaching checkpoints with the fixed seed, run:
 

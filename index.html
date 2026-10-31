@@ -1918,10 +1918,10 @@ dialog::backdrop{background:rgba(35,9,26,.68);backdrop-filter:blur(11px) saturat
     </section>
 
     <section class="lab-card" style="margin-bottom:16px">
-      <div class="lab-card-head"><h2>04 · Model and toolkit readiness</h2><button class="btn btn-secondary btn-sm" type="button" onclick="loadNlpLab()">Refresh status</button></div>
-      <div class="lab-card-body"><p class="lab-subtitle">The cards distinguish a working demo from a package being installed and from a model that still needs weights or training.</p><div id="nlpCapabilities"><div class="empty-state"><p>Checking local model setup…</p></div></div></div>
+      <div class="lab-card-head"><h2>04 · Research corpora</h2></div>
+      <div class="lab-card-body"><p class="lab-subtitle">Benchmark and language datasets are listed separately from your uploaded documents and never enter document answers.</p><div id="nlpResearchDatasets"><div class="empty-state"><p>Loading research corpus inventory…</p></div></div></div>
     </section>
-    <p class="lab-note">Pipeline transparency: tokenization, POS, and lemmas use a compatible local spaCy pipeline only when that language model is installed and loaded; otherwise the analyzer labels its transparent rule fallback. Sequence classifiers are tiny synthetic teaching models, not legal models. The app’s pretrained retrieval model is a separate system from these classroom demonstrations and from model fine-tuning.</p>
+
   </div>
 
 </main>
@@ -2217,7 +2217,7 @@ function showPanel(name) {
   if (name === 'conflicts') loadConflicts();
   if (name === 'timeline') loadTimeline();
   if (name === 'graph') loadGraph();
-  if (name === 'nlp-lab') { loadNlpLab(); loadBenchmark(); }
+  if (name === 'nlp-lab') { loadNlpResearchDatasets(); loadBenchmark(); }
 }
 
 async function loadReadiness() {
@@ -2247,39 +2247,22 @@ function labRows(items, leftKey, rightKey, rightSuffix = '') {
   return `<div class="lab-list">${items.slice(0, 16).map(x => `<div class="lab-row"><span>${esc(x[leftKey])}</span><span>${esc(x[rightKey])}${rightSuffix}</span></div>`).join('')}</div>`;
 }
 
-async function copyNlpSetup(button) {
-  const command = button?.dataset?.setup || '';
-  if (!command.trim()) return;
-  try {
-    await navigator.clipboard.writeText(command);
-    showToast('Setup steps copied', 'Paste them into PowerShell from the LEGITMATE project folder, then restart the app to refresh model readiness.');
-  } catch (_) {
-    showToast('Clipboard unavailable', 'Use the model setup steps shown on this card in a local terminal.');
-  }
-}
-
-async function loadNlpLab() {
-  const target = document.getElementById('nlpCapabilities');
+async function loadNlpResearchDatasets() {
+  const target = document.getElementById('nlpResearchDatasets');
   if (!target) return;
   try {
-    const r = await apiFetch('/api/nlp-lab/status');
-    const d = await r.json();
-    const working = (d.working_now || []).map(x => `<div class="lab-model"><strong>${esc(x.name)}</strong><p>${esc(x.detail)}</p><span class="badge badge-local">Ready locally</span></div>`).join('');
-    const labels = {active_pipeline:'Task connected · checkpoint ready',runtime_only:'Runtime only · no connected task',not_installed:'Runtime not installed'};
-    const optional = (d.optional_models || []).map(x => {
-      const state = x.state || (x.runtime ? 'runtime_only' : 'not_installed');
-      const className = state === 'active_pipeline' ? '' : state === 'runtime_only' ? 'runtime' : 'missing';
-      const modelLine = x.model_name ? `<p><b>Language model:</b> ${esc(x.model_name)} · ${x.checkpoint ? 'loaded' : 'not loaded'}</p>` : `<p><b>Runtime:</b> ${x.runtime ? 'installed' : 'not installed'} &nbsp; <b>Checkpoint:</b> ${x.checkpoint ? 'present' : 'not confirmed'} &nbsp; <b>Task:</b> ${x.task_connected ? 'connected' : 'not connected'}</p>`;
-      const setup = x.setup_command ? `<button class="btn btn-secondary lab-model-action" type="button" data-setup="${esc(x.setup_command)}" onclick="copyNlpSetup(this)">Copy setup / next steps</button>` : '';
-      return `<article class="lab-model"><strong>${esc(x.name)}</strong><span class="lab-model-status ${className}">${esc(labels[state] || 'Needs review')}</span><p>${esc(x.detail)}</p>${modelLine}${setup}</article>`;
+    const response = await apiFetch('/api/nlp-lab/status');
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Could not load the research corpus inventory.');
+    const cards = (data.research_datasets || []).map(item => {
+      const count = Number(item.records || 0) > 0 ? `${Number(item.records).toLocaleString()} ${esc(item.unit)}` : 'Count not prepared';
+      const splits = item.splits?.length ? `<p><b>Prepared splits:</b> ${esc(item.splits.join(', '))}</p>` : '';
+      return `<article class="lab-model"><strong>${esc(item.name)}</strong><span class="lab-data-state">${esc(item.local_state || 'Local files not checked')}</span><p><b>${count}</b> · ${esc(item.license)}</p>${splits}<p>${esc(item.detail)}</p></article>`;
     }).join('');
-    const datasets = (d.research_datasets || []).map(x => {
-      const count = Number(x.records || 0) > 0 ? `${Number(x.records).toLocaleString()} ${esc(x.unit)}` : `Count not prepared`;
-      const prepare = x.setup_command ? `<button class="btn btn-secondary lab-model-action" type="button" data-setup="${esc(x.setup_command)}" onclick="copyNlpSetup(this)">Copy preparation command</button>` : '';
-      return `<article class="lab-model"><strong>${esc(x.name)}</strong><span class="lab-data-state">${esc(x.local_state || 'Local files not checked')}</span><p><b>${count}</b> · ${esc(x.license)}</p>${x.splits?.length ? `<p><b>Split files:</b> ${esc(x.splits.join(', '))}</p>` : ''}<p>${esc(x.detail)}</p>${prepare}</article>`;
-    }).join('');
-    target.innerHTML = `<h3 class="lab-table-title">Available demonstrations</h3><div class="lab-model-grid">${working}</div><h3 class="lab-table-title" style="margin-top:18px">Advanced model integrations · runtime, checkpoint, and task shown separately</h3><div class="lab-model-grid">${optional}</div><h3 class="lab-table-title" style="margin-top:18px">Kaggle research datasets · isolated from uploaded legal documents</h3><p class="lab-subtitle">Local file status is checked separately from the published dataset counts. These corpora do not enter LEGITMATE document search or generated legal answers.</p><div class="lab-model-grid">${datasets}</div>`;
-  } catch (e) { target.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`; }
+    target.innerHTML = `<div class="lab-model-grid">${cards || '<p class="lab-subtitle">No research corpora are configured.</p>'}</div>`;
+  } catch (error) {
+    target.innerHTML = `<div class="alert alert-error">${esc(error.message)}</div>`;
+  }
 }
 
 async function loadBenchmark() {
