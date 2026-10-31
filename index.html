@@ -1917,11 +1917,6 @@ dialog::backdrop{background:rgba(35,9,26,.68);backdrop-filter:blur(11px) saturat
       </div>
     </section>
 
-    <section class="lab-card" style="margin-bottom:16px">
-      <div class="lab-card-head"><h2>04 · Research corpora</h2></div>
-      <div class="lab-card-body"><p class="lab-subtitle">Benchmark and language datasets are listed separately from your uploaded documents and never enter document answers.</p><div id="nlpResearchDatasets"><div class="empty-state"><p>Loading research corpus inventory…</p></div></div></div>
-    </section>
-
   </div>
 
 </main>
@@ -2217,7 +2212,7 @@ function showPanel(name) {
   if (name === 'conflicts') loadConflicts();
   if (name === 'timeline') loadTimeline();
   if (name === 'graph') loadGraph();
-  if (name === 'nlp-lab') { loadNlpResearchDatasets(); loadBenchmark(); }
+  if (name === 'nlp-lab') { loadBenchmark(); }
 }
 
 async function loadReadiness() {
@@ -2245,24 +2240,6 @@ async function loadReadiness() {
 function labRows(items, leftKey, rightKey, rightSuffix = '') {
   if (!items?.length) return '<p class="lab-subtitle">No results for this text.</p>';
   return `<div class="lab-list">${items.slice(0, 16).map(x => `<div class="lab-row"><span>${esc(x[leftKey])}</span><span>${esc(x[rightKey])}${rightSuffix}</span></div>`).join('')}</div>`;
-}
-
-async function loadNlpResearchDatasets() {
-  const target = document.getElementById('nlpResearchDatasets');
-  if (!target) return;
-  try {
-    const response = await apiFetch('/api/nlp-lab/status');
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || 'Could not load the research corpus inventory.');
-    const cards = (data.research_datasets || []).map(item => {
-      const count = Number(item.records || 0) > 0 ? `${Number(item.records).toLocaleString()} ${esc(item.unit)}` : 'Count not prepared';
-      const splits = item.splits?.length ? `<p><b>Prepared splits:</b> ${esc(item.splits.join(', '))}</p>` : '';
-      return `<article class="lab-model"><strong>${esc(item.name)}</strong><span class="lab-data-state">${esc(item.local_state || 'Local files not checked')}</span><p><b>${count}</b> · ${esc(item.license)}</p>${splits}<p>${esc(item.detail)}</p></article>`;
-    }).join('');
-    target.innerHTML = `<div class="lab-model-grid">${cards || '<p class="lab-subtitle">No research corpora are configured.</p>'}</div>`;
-  } catch (error) {
-    target.innerHTML = `<div class="alert alert-error">${esc(error.message)}</div>`;
-  }
 }
 
 async function loadBenchmark() {

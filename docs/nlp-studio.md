@@ -7,7 +7,6 @@
 3. Use **Analyze a text** for tokenization and linguistic/statistical demos.
 4. Use **Compare answer quality** to compare a reference and candidate answer.
 5. Use **Neural sequence model comparison** to run the CNN, vanilla RNN, GRU, or LSTM on one short teaching sentence.
-6. Review the research-corpus inventory separately from the uploaded-document workspace.
 
 The entered text for these two local demonstrations is processed by the LEGITMATE server. These tools do not call Gemini/Groq and do not modify uploaded documents or `data/index.json`.
 
