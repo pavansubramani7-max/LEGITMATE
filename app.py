@@ -35,7 +35,7 @@ from app.auth import (
 from app.accounts import initialize_accounts, list_users, create_customer, set_active, reset_password, change_password
 from app.config import MAX_UPLOAD_BYTES, ROOT
 from app.store import load, save, workspace_uploads
-from app.ingestion.pdf_reader import extract_pages, extract_pages_with_ocr, ocr_quality_signals
+from app.ingestion.pdf_reader import detect_ocr_language, extract_pages, extract_pages_with_ocr, ocr_quality_signals
 from app.ingestion.docx_reader import extract_docx_sections
 from app.ingestion.text_readers import extract_office_sections, extract_text_sections
 from app.ingestion.chunker import make_chunks
@@ -93,6 +93,17 @@ _LEGAL_TOPIC_RULES = {
     "Obligations and conditions": r"\b(shall|must|covenant|obligation|condition|warrant|undertake)\b",
     "Registration and records": r"\b(registration|registered|encumbrance|mutation|record|sub-registrar)\b",
 }
+
+
+def _template_diagnostics(pages: list[dict[str, Any]]) -> dict[str, Any]:
+    """Flag documents with many visibly unfilled form fields; this is a cue, not a classifier."""
+    text = "\n".join(str(page.get("text", "")) for page in pages)
+    blank_runs = re.findall(r"(?<!_)_{3,}(?!_)|\.{4,}|\[\s*\]", text)
+    return {
+        "looks_like_unfilled_template": len(blank_runs) >= 6,
+        "blank_field_markers": len(blank_runs),
+        "method": "Counted long underscore/dot blanks and empty brackets in extracted text; heuristic only.",
+    }
 
 
 def _document_scorecard(pages: list[dict[str, Any]], items: list[dict[str, Any]]) -> dict[str, Any]:
@@ -186,7 +197,69 @@ def _run_extraction(doc_id: str, doc_name: str, pages: list[dict[str, Any]]) -> 
         items.extend(extract_entities(doc_id, doc_name, p["page"], text))
         items.extend(extract_dates(doc_id, doc_name, p["page"], text))
         items.extend(extract_claims(doc_id, doc_name, p["page"], text))
+    for item in items:
+        item["source_type"] = "automated"
     return items
+
+
+_REVIEW_FIELDS = (
+    "review_status", "reviewed_at", "note", "event_date",
+    "claim_evidence_judgment", "claim_evidence_refs", "claim_evidence_note",
+    "evidence_reviewed_at",
+)
+
+
+def _item_review_key(item: dict[str, Any]) -> tuple[str, str, str]:
+    value = re.sub(r"[^\w\s]", " ", str(item.get("value", "")).casefold())
+    return str(item.get("kind", "")), str(item.get("page", "")), " ".join(value.split())
+
+
+def _merge_reanalysis_items(previous: list[dict[str, Any]], refreshed: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+    """Keep stable IDs and human review state for exact source-backed matches."""
+    by_key: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for item in previous:
+        by_key.setdefault(_item_review_key(item), []).append(item)
+    used: set[str] = set()
+    merged: list[dict[str, Any]] = []
+    for item in refreshed:
+        candidates = by_key.get(_item_review_key(item), [])
+        old = next((candidate for candidate in candidates if str(candidate.get("item_id")) not in used), None)
+        if old is not None:
+            old_id = str(old.get("item_id", ""))
+            used.add(old_id)
+            if old_id:
+                item["item_id"] = old_id
+            for key in _REVIEW_FIELDS:
+                if key in old:
+                    item[key] = old[key]
+        merged.append(item)
+
+    # Unmatched reviewed or manually added records remain visible for follow-up;
+    # unmatched automated candidates are replaced by the improved extractor.
+    referenced_ids = {
+        str(ref_id)
+        for item in previous
+        if item.get("kind") == "claim" and item.get("claim_evidence_judgment", "unreviewed") != "unreviewed"
+        for ref_id in item.get("claim_evidence_refs", [])
+    }
+    kept_reviewed = 0
+    for old in previous:
+        old_id = str(old.get("item_id", ""))
+        if old_id in used:
+            continue
+        has_review = (
+            old.get("source_type") == "manual"
+            or old.get("review_status", "candidate") != "candidate"
+            or old.get("note")
+            or old.get("claim_evidence_judgment", "unreviewed") != "unreviewed"
+            or old.get("claim_evidence_refs")
+            or old.get("claim_evidence_note")
+            or old_id in referenced_ids
+        )
+        if has_review:
+            merged.append(old)
+            kept_reviewed += 1
+    return merged, kept_reviewed
 
 
 def _analysis_sample(pages: list[dict[str, Any]], limit: int = 10000) -> str:
@@ -213,18 +286,25 @@ def _processing_report(filename: str, suffix: str, pages: list[dict[str, Any]], 
     sample_text = _analysis_sample(pages)
     nlp_analysis = analyze_text(sample_text, corpus_chunks=corpus_chunks)
     scorecard = _document_scorecard(pages, items)
+    template_diagnostics = _template_diagnostics(pages)
     warnings = []
     if suffix == ".pdf" and not any(str(page.get("text", "")).strip() for page in pages):
         warnings.append("No selectable PDF text was found. Scanned pages need OCR before analysis.")
     if not topics:
         warnings.append("No topic matched the current legal-document topic cues; inspect the source text manually.")
+    if template_diagnostics["looks_like_unfilled_template"]:
+        warnings.append(
+            "This file appears to be an unfilled template ("
+            f"{template_diagnostics['blank_field_markers']} blank-field markers). "
+            "Treat names, amounts, and property identifiers as incomplete until confirmed in the source."
+        )
     return {
         "filename": filename, "file_type": suffix.lstrip("."), "size_bytes": byte_count,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "language": language, "pages_or_sections": len(pages),
         "readable_pages_or_sections": sum(bool(str(p.get("text", "")).strip()) for p in pages),
         "topics": topics, "counts": kinds, "candidate_highlights": highlights,
-        "coverage_scorecard": scorecard,
+        "coverage_scorecard": scorecard, "template_diagnostics": template_diagnostics,
         "total_candidates": len(items), "nlp_analysis": nlp_analysis,
         "analysis_scope": f"Full-document coverage scoring assessed every readable page/section ({scorecard['sections_scored']} of {len(pages)} records), including token counts, lexical diversity, topic cue coverage and source-located candidate counts. The detailed POS/lemma and term preview remains bounded to {len(sample_text):,} characters for responsiveness; every readable section is included in the scorecard.",
         "warnings": warnings,
@@ -764,7 +844,7 @@ def nlp_lab_sequence_demo(req: SequenceDemoRequest, _session: str = Depends(requ
 async def upload_document(
     file: UploadFile = File(...),
     use_local_ocr: bool = Form(default=False),
-    ocr_language: str = Form(default="eng"),
+    ocr_language: str = Form(default="auto"),
     matter_id: str = Form(default=""),
     _csrf: None = Depends(require_csrf),
 ) -> dict[str, Any]:
@@ -780,15 +860,17 @@ async def upload_document(
     citation_unit = "page" if suffix in {".pdf", ".pptx", ".xlsx"} else "section"
     ocr_pages: list[int] = []
     ocr_skipped_pages: list[int] = []
-    allowed_ocr_languages = {"eng", "hin", "eng+hin", "tam", "tel", "kan", "mal", "ben", "guj", "pan", "ara", "spa", "fra", "deu"}
-    if ocr_language not in allowed_ocr_languages:
-        raise HTTPException(422, "Choose an OCR language from the supported local options.")
+    ocr_language_selection: dict[str, Any] | None = None
     if suffix == ".pdf":
         if not content.startswith(b"%PDF-"):
             raise HTTPException(400, "The file does not appear to be a valid PDF.")
         try:
             pages = extract_pages(content)
-            if use_local_ocr:
+            needs_ocr = any(len("".join(str(page.get("text", "")).split())) < 40 for page in pages)
+            if use_local_ocr and needs_ocr:
+                initial_text = "\n".join(str(page.get("text", "")) for page in pages if str(page.get("text", "")).strip())
+                ocr_language_selection = detect_ocr_language(content, initial_text[:20000])
+                ocr_language = str(ocr_language_selection["language"])
                 pages, ocr_pages, ocr_skipped_pages = extract_pages_with_ocr(content, language=ocr_language)
         except ValueError as exc:
             raise HTTPException(422, str(exc))
@@ -842,6 +924,7 @@ async def upload_document(
         "ocr_needed": suffix == ".pdf" and len(text_pages) < len(pages),
         "ocr_used": bool(ocr_pages),
         "ocr_language": ocr_language if ocr_pages else None,
+        "ocr_language_detection": ocr_language_selection,
         "ocr_pages": ocr_pages,
         "ocr_skipped_pages": ocr_skipped_pages,
     }
@@ -873,11 +956,16 @@ async def upload_document(
             "used": True,
             "engine": "Tesseract through PyMuPDF (local)",
             "language": ocr_language,
+            "language_detection": ocr_language_selection,
             "pages": ocr_pages,
             "skipped_pages": ocr_skipped_pages,
             "quality_signals": quality_by_page,
             "notice": "OCR text can contain recognition errors; verify every finding against the original page image.",
         }
+        if ocr_language_selection and ocr_language_selection.get("fallback"):
+            report["warnings"].append(
+                f"Automatic OCR language detection selected {ocr_language} because the detected document language pack was not installed locally."
+            )
         flagged_pages = [str(entry["page"]) for entry in quality_by_page if entry["review_recommended"]]
         if flagged_pages:
             report["warnings"].append(
@@ -930,6 +1018,118 @@ def document_integrity(document_id: str, _session: str = Depends(require_session
     if document is None:
         raise HTTPException(404, "Document not found in this account workspace.")
     return {"document_id": document_id, **_document_integrity(document)}
+
+
+@app.post("/api/documents/{document_id}/reprocess")
+def reprocess_document(document_id: str, _csrf: None = Depends(require_csrf)) -> dict[str, Any]:
+    """Re-run local extraction on the unchanged stored source without duplicating it."""
+    data = load()
+    document = next((doc for doc in data.get("documents", []) if doc.get("document_id") == document_id), None)
+    if document is None:
+        raise HTTPException(404, "Document not found in this account workspace.")
+    integrity = _document_integrity(document)
+    if not integrity.get("verified"):
+        raise HTTPException(409, "Re-analysis requires the original file to match its upload-time SHA-256. Verify or restore the unchanged source first.")
+
+    stored_name = Path(str(document.get("stored_filename", ""))).name
+    source_path = workspace_uploads() / stored_name
+    content = source_path.read_bytes()
+    suffix = "." + str(document.get("file_type", Path(stored_name).suffix.lstrip("."))).casefold().lstrip(".")
+    ocr_pages: list[int] = []
+    ocr_skipped_pages: list[int] = []
+    ocr_language_selection: dict[str, Any] | None = None
+    try:
+        if suffix == ".pdf":
+            source_pages = extract_pages(content)
+            if document.get("ocr_used") and any(len("".join(str(page.get("text", "")).split())) < 40 for page in source_pages):
+                initial_text = "\n".join(str(page.get("text", "")) for page in source_pages if str(page.get("text", "")).strip())
+                ocr_language_selection = detect_ocr_language(content, initial_text[:20000])
+                pages, ocr_pages, ocr_skipped_pages = extract_pages_with_ocr(
+                    content, language=str(ocr_language_selection["language"])
+                )
+            else:
+                pages = source_pages
+        elif suffix == ".docx":
+            pages = extract_docx_sections(content)
+        elif suffix in {".docm", ".pptx", ".xlsx"}:
+            pages = extract_office_sections(content, suffix)
+        else:
+            pages = extract_text_sections(content, suffix)
+    except ValueError as exc:
+        raise HTTPException(422, f"Could not re-read the verified source: {exc}") from exc
+
+    text_pages = [page for page in pages if str(page.get("text", "")).strip()]
+    if not text_pages:
+        raise HTTPException(422, "The verified source has no readable text sections to re-analyze.")
+
+    previous = [item for item in data.get("items", []) if str(item.get("document_id", "")) == document_id]
+    refreshed = _run_extraction(document_id, str(document.get("filename", "")), text_pages)
+    citation_unit = str(document.get("citation_unit", "page"))
+    for item in refreshed:
+        item["citation_unit"] = citation_unit
+    merged, preserved_reviewed = _merge_reanalysis_items(previous, refreshed)
+    data["items"] = [item for item in data.get("items", []) if str(item.get("document_id", "")) != document_id] + merged
+
+    language = detect_language(_analysis_sample(text_pages, limit=20000))
+    corpus_chunks = [str(chunk.get("text", "")) for chunk in data.get("chunks", [])[:300]]
+    report = _processing_report(str(document.get("filename", "")), suffix, pages, merged, language, len(content), corpus_chunks)
+    report["source_provenance"] = {
+        "sha256": str(document.get("source_sha256", "")),
+        "hash_stage": "verified original upload bytes before text extraction/OCR",
+        "ingestion_version": app.version,
+    }
+    report["reanalysis"] = {
+        "performed_at": datetime.now(timezone.utc).isoformat(),
+        "source_sha256_verified": True,
+        "review_annotations_preserved": preserved_reviewed,
+    }
+    if ocr_pages:
+        quality_by_page = [
+            {"page": number, **ocr_quality_signals(str(pages[number - 1].get("text", "")))}
+            for number in ocr_pages
+        ]
+        report["ocr"] = {
+            "used": True,
+            "engine": "Tesseract through PyMuPDF (local)",
+            "language": str(document.get("ocr_language") or "eng"),
+            "language_detection": ocr_language_selection,
+            "pages": ocr_pages,
+            "skipped_pages": ocr_skipped_pages,
+            "quality_signals": quality_by_page,
+            "notice": "OCR text can contain recognition errors; verify every finding against the original page image.",
+        }
+        flagged_pages = [str(entry["page"]) for entry in quality_by_page if entry["review_recommended"]]
+        if flagged_pages:
+            report["warnings"].append("OCR text diagnostics recommend manual image review on pages: " + ", ".join(flagged_pages[:30]) + ". These are heuristic warning signals, not OCR confidence scores.")
+        if ocr_skipped_pages:
+            report["warnings"].append(f"OCR was limited to 50 low-text pages. Pages not OCR'd: {', '.join(map(str, ocr_skipped_pages[:20]))}.")
+
+    document.update({
+        "language": language,
+        "pages": len(pages),
+        "text_pages": len(text_pages),
+        "ocr_needed": suffix == ".pdf" and len(text_pages) < len(pages),
+        "ocr_pages": ocr_pages,
+        "ocr_skipped_pages": ocr_skipped_pages,
+        "ocr_language": str(ocr_language_selection.get("language")) if ocr_language_selection and ocr_pages else document.get("ocr_language"),
+        "ocr_language_detection": ocr_language_selection or document.get("ocr_language_detection"),
+        "processing_report": report,
+        "ingestion_version": app.version,
+    })
+    _refresh_conflicts(data)
+    save(data)
+    record_audit_event("document.reanalyzed", "document", document_id, changes=["source_sha256_verified", "candidate_items_refreshed", "review_state_preserved"])
+    return {
+        "document_id": document_id,
+        "filename": document.get("filename"),
+        "pages": len(pages),
+        "readable_pages": len(text_pages),
+        "candidate_items": len(merged),
+        "review_annotations_preserved": preserved_reviewed,
+        "template_like": bool(report.get("template_diagnostics", {}).get("looks_like_unfilled_template")),
+        "warnings": report.get("warnings", []),
+        "status": "reprocessed",
+    }
 
 
 @app.delete("/api/documents/{document_id}")
@@ -1141,6 +1341,7 @@ def add_item(
         "document": req.document,
         "page": req.page,
         "citation_unit": next(d.get("citation_unit", "page") for d in data["documents"] if d["document_id"] == req.document_id),
+        "source_type": "manual",
         "review_status": "candidate",
         "event_date": req.event_date,
         "reviewed_at": None,

@@ -61,7 +61,7 @@ Sensitive matter, document, account, and item-review actions append metadata-onl
 - Single-user local authentication; session and CSRF protection are implemented for the prototype
 - JSON store is not suitable for large corpora (>100 documents)
 - Extraction uses regex patterns; accuracy depends on document formatting
-- Optional local Tesseract OCR for low-text PDF pages when the selected language pack is installed; OCR output needs visual review
+- Optional local Tesseract OCR for low-text PDF pages; the app automatically estimates language from readable text or script, chooses an installed pack, and discloses uncertain fallback. OCR output needs visual review
 - DOCX citations use numbered text sections, not page numbers, because Word pagination can change across devices
 - Legacy binary `.doc` files are not supported; save them as `.docx` or PDF first
 - Language and topic labels are heuristic estimates and must be reviewed

@@ -20,9 +20,10 @@ accounts. If setup is new, follow the README administrator configuration first.
 
 1. **Upload:** add one of the synthetic PDFs from `data/sample/`. Show the
    upload report and retained page locations. For an authorized scanned PDF,
-   enable local OCR, select a language pack installed in Tesseract, and show
-   the per-page OCR warning signals. Explain that these are not confidence
-   scores and every OCR finding needs visual source review.
+   enable local OCR and show automatic language/script detection, the selected
+   installed pack, and per-page OCR warning signals. Explain that these are not
+   confidence scores and every OCR finding needs visual source review. The
+   upload form no longer asks for a language selection.
 2. **Ask:** ask a question whose answer is stated in the document. Open its
    citation and verify the cited passage and page in the source.
 3. **Review a claim:** open the claims/evidence review view. Show source-text

@@ -788,6 +788,12 @@ body{background:radial-gradient(ellipse at 92% 0%,rgba(213,190,151,.14),transpar
 .nav-count{margin-left:auto;}
 .upload-zone{position:relative;padding:30px 20px;border:1px dashed #c7ab87;border-radius:16px;background:linear-gradient(145deg,#fffdf9,#f8f4ee);}
 .upload-zone.is-dragover{border-color:#76194b;background:#fbf1f6;box-shadow:0 0 0 4px rgba(118,25,75,.08);}
+.upload-language-auto{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 15px;border:1px solid rgba(119,153,113,.35);border-radius:14px;background:linear-gradient(110deg,#f5f8ef,#fffdf7 65%,#f8f0df);box-shadow:0 7px 20px rgba(56,83,48,.07);}
+.upload-language-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid #d8dfc6;border-radius:12px;background:#fff;color:#395b37;font-family:serif;font-size:20px;font-weight:700;}
+.upload-language-auto strong,.upload-language-auto small{display:block;}
+.upload-language-auto strong{color:#29442a;font-size:14px;letter-spacing:.01em;}
+.upload-language-auto small{margin-top:3px;color:#64715c;font-size:12px;line-height:1.45;}
+.upload-language-pill{margin-left:auto;padding:5px 9px;border:1px solid #d8dfc6;border-radius:999px;background:#fff;color:#42633e;font-size:10px;font-weight:800;letter-spacing:.12em;}
 .upload-mark{width:49px;height:49px;display:grid;place-items:center;margin:0 auto 13px;border:1px solid #eadbc4;border-radius:15px;color:#8e6634;background:#fff;box-shadow:0 5px 13px rgba(60,33,45,.06);}
 .upload-title{margin-bottom:4px;color:#4c1235;font-size:19px;font-weight:700;}
 .upload-zone input[type=file]{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
@@ -1594,14 +1600,8 @@ dialog::backdrop{background:rgba(35,9,26,.68);backdrop-filter:blur(11px) saturat
                 <div class="upload-hint">PDF · Word · PowerPoint · Excel · TXT · Markdown · CSV · JSON · HTML · RTF · maximum 200 MB</div>
               </div>
               <label style="display:flex;align-items:flex-start;gap:9px;margin-top:14px;font-size:14px;line-height:1.5;color:var(--ink)"><input type="checkbox" id="localOcrToggle" style="margin-top:4px"> Try local OCR on scanned PDF pages</label>
-              <label for="ocrLanguage" style="display:block;margin:10px 0 5px;font-size:13px;color:var(--muted)">OCR language (must be installed in local Tesseract)</label>
-              <select id="ocrLanguage" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">
-                <option value="eng">English</option><option value="eng+hin">English + Hindi</option><option value="hin">Hindi</option>
-                <option value="tam">Tamil</option><option value="tel">Telugu</option><option value="kan">Kannada</option><option value="mal">Malayalam</option>
-                <option value="ben">Bengali</option><option value="guj">Gujarati</option><option value="pan">Punjabi</option><option value="ara">Arabic</option>
-                <option value="spa">Spanish</option><option value="fra">French</option><option value="deu">German</option>
-              </select>
-              <div style="margin-top:5px;font-size:12px;line-height:1.45;color:var(--muted)">Runs on this computer. Install the matching Tesseract language data first; OCR text is automatically flagged for visual review when simple quality signals look weak.</div>
+              <div class="upload-language-auto" role="status"><span class="upload-language-icon" aria-hidden="true">文</span><span><strong>Language detection is automatic</strong><small>LEGITMATE estimates the document language locally. For scanned PDFs, local OCR chooses an installed language pack and reports any uncertain fallback.</small></span><span class="upload-language-pill">AUTO</span></div>
+              <div style="margin-top:7px;font-size:12px;line-height:1.5;color:var(--muted)">Scanned-page OCR runs on this computer and requires Tesseract plus its matching language data. OCR results are flagged for visual review; always compare them with the original page.</div>
               <div style="margin-top:11px">
                 <button type="submit" class="btn btn-primary" id="uploadBtn" style="width:100%">
                   <span id="uploadBtnLabel">Add document</span>
@@ -2570,7 +2570,9 @@ function processingReportMarkup(report, expanded = false, documentId = '') {
     : '<p class="report-sub">No candidate facts or statements were extracted from readable text.</p>';
   const warnings = (report.warnings || []).map(w => `<div class="report-warning">${esc(w)}</div>`).join('');
   const ocrRows = report.ocr?.quality_signals || [];
-  const ocrPanel = ocrRows.length ? `<div class="report-sub" style="margin:10px 0"><strong>Local OCR review signals · ${esc(report.ocr.language || 'unknown language')}</strong>${ocrRows.map(row => `<div style="margin-top:5px;padding:8px 10px;border-radius:9px;background:var(--surface-2,#f5f2ec)">Page ${Number(row.page)} · ${Number(row.recognized_words)} words · ${Number(row.recognized_characters)} characters · alphabetic share ${Math.round(Number(row.alphabetic_share || 0)*100)}% · ${row.review_recommended ? '<b>visual review recommended</b>' : 'no basic text warning'}</div>`).join('')}<div style="margin-top:4px">These are heuristic text diagnostics, not OCR confidence scores.</div></div>` : '';
+  const ocrDetect = report.ocr?.language_detection;
+  const ocrDetectionNote = ocrDetect ? `<div style="margin:7px 0;padding:9px 11px;border-left:3px solid var(--accent,#b88746);border-radius:8px;background:var(--surface-2,#f5f2ec)"><strong>Automatic language selection:</strong> ${esc(ocrDetect.detected_label || 'Language uncertain')} → local pack <b>${esc(ocrDetect.language || report.ocr.language || 'unknown')}</b> · ${esc(ocrDetect.method || 'local detection')}${ocrDetect.fallback ? ' · fallback used because the detected pack is not installed' : ''}${Number(ocrDetect.confidence || 0) ? ` · estimate ${Math.round(Number(ocrDetect.confidence)*100)}%` : ''}</div>` : '';
+  const ocrPanel = ocrRows.length ? `<div class="report-sub" style="margin:10px 0"><strong>Local OCR review signals · ${esc(report.ocr.language || 'unknown language')}</strong>${ocrDetectionNote}${ocrRows.map(row => `<div style="margin-top:5px;padding:8px 10px;border-radius:9px;background:var(--surface-2,#f5f2ec)">Page ${Number(row.page)} · ${Number(row.recognized_words)} words · ${Number(row.recognized_characters)} characters · alphabetic share ${Math.round(Number(row.alphabetic_share || 0)*100)}% · ${row.review_recommended ? '<b>visual review recommended</b>' : 'no basic text warning'}</div>`).join('')}<div style="margin-top:4px">These are heuristic text diagnostics, not OCR confidence scores.</div></div>` : '';
   const actions = documentId ? `<div class="report-actions"><button type="button" onclick="openDocumentReport('${esc(documentId)}')">Review full NLP report</button><a href="/api/documents/${encodeURIComponent(documentId)}/report">Download report</a></div>` : '';
   return `<details class="processing-report" ${expanded ? 'open' : ''}><summary style="cursor:pointer;list-style:none"><h3 style="display:inline">Document intelligence report</h3><span class="badge badge-local" style="margin-left:7px">Ready</span></summary>
     <p class="report-sub">${esc(report.language?.label || 'Language not estimated')} · ${Number(report.pages_or_sections || 0)} pages/sections · ${(Number(report.size_bytes || 0) / (1024 * 1024)).toFixed(1)} MB. Automatically extracted; review every item.</p>
@@ -2686,7 +2688,7 @@ async function refreshDocs() {
         <div class="doc-info">
           <div class="doc-name">${esc(x.filename)}</div>
           <div class="doc-meta">${x.pages} ${unit}${x.pages === 1 ? '' : 's'} &middot; ${x.text_pages} text ${unit}${x.text_pages === 1 ? '' : 's'} &middot; Language: ${esc(x.language?.label || 'not detected')} &middot; ${new Date(x.uploaded_at).toLocaleDateString()}</div>
-          <div class="doc-integrity-row">${x.source_sha256 ? `<span class="doc-integrity-hash" title="SHA-256 fingerprint recorded from the original upload">UPLOAD SHA-256 · <code>${esc(x.source_sha256.slice(0,16))}…</code></span>` : '<span class="doc-integrity-hash doc-integrity-legacy">Legacy document · no upload fingerprint</span>'}<button type="button" class="btn btn-secondary btn-xs doc-integrity-check" data-document-id="${esc(x.document_id)}">Verify original</button></div>
+          <div class="doc-integrity-row">${x.source_sha256 ? `<span class="doc-integrity-hash" title="SHA-256 fingerprint recorded from the original upload">UPLOAD SHA-256 · <code>${esc(x.source_sha256.slice(0,16))}…</code></span>` : '<span class="doc-integrity-hash doc-integrity-legacy">Legacy document · no upload fingerprint</span>'}<button type="button" class="btn btn-secondary btn-xs doc-integrity-check" data-document-id="${esc(x.document_id)}">Verify original</button><button type="button" class="btn btn-secondary btn-xs doc-reanalyze" data-document-id="${esc(x.document_id)}">Re-analyze</button></div>
           <div class="doc-matter-row"><label for="docMatter-${esc(x.document_id)}">MATTER</label><select class="doc-matter-select" id="docMatter-${esc(x.document_id)}" data-document-id="${esc(x.document_id)}"><option value="">Unassigned</option>${workspaceMatters.map(matter => `<option value="${esc(matter.matter_id)}" ${x.matter_id === matter.matter_id ? 'selected' : ''}>${esc(matter.title)}</option>`).join('')}</select></div>
           ${x.ocr_needed ? `<div style="font-size:10px;color:var(--amber);margin-top:2px">${SVG_WARN} Some pages may need OCR</div>` : ''}
           ${processingReportMarkup(x.processing_report, false, x.document_id)}
@@ -2722,6 +2724,19 @@ async function refreshDocs() {
         };
         showToast(result.verified ? 'Original file verified' : 'Integrity needs review', messages[result.status] || 'The file integrity status needs review.');
       } catch (error) { showToast('Integrity check failed', error.message); }
+      finally { control.disabled = false; control.textContent = original; }
+    }));
+    el.querySelectorAll('.doc-reanalyze').forEach(button => button.addEventListener('click', async event => {
+      const control = event.currentTarget; const original = control.textContent;
+      control.disabled = true; control.textContent = 'Re-analyzing…';
+      try {
+        const response = await apiFetch(`/api/documents/${encodeURIComponent(control.dataset.documentId)}/reprocess`, {method:'POST'});
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || 'Could not re-analyze this document.');
+        const note = result.template_like ? ' Blank form fields were detected; review candidates carefully.' : '';
+        showToast('Document re-analyzed', `${result.readable_pages} readable pages · ${result.candidate_items} candidates refreshed.${note}`);
+        await Promise.all([refreshDocs(), loadOverview()]);
+      } catch (error) { showToast('Re-analysis failed', error.message); }
       finally { control.disabled = false; control.textContent = original; }
     }));
   } catch (e) {
@@ -2829,7 +2844,7 @@ document.getElementById('uploadForm').addEventListener('submit', async e => {
     const fd = new FormData();
     fd.append('file', selectedFile);
     if (document.getElementById('localOcrToggle').checked) fd.append('use_local_ocr', 'true');
-    fd.append('ocr_language', document.getElementById('ocrLanguage').value);
+    fd.append('ocr_language', 'auto');
     fd.append('matter_id', selectedMatterId && selectedMatterId !== '__unassigned__' ? selectedMatterId : '');
     const r = await fetch('/api/documents', {
       method: 'POST', body: fd, credentials: 'same-origin',

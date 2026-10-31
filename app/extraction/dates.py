@@ -1,6 +1,7 @@
 from __future__ import annotations
 import re
 import uuid
+from datetime import date
 from typing import Any
 
 _MONTHS = {
@@ -23,9 +24,11 @@ _DATE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_NUMBER = r"(?:\d{1,3}(?:,\d{2,3})+|\d+)(?:\.\d{1,2})?"
 _AMOUNT_RE = re.compile(
-    r"(?:Rs\.?|INR|USD|\$|£|€)\s*[\d,]+(?:\.\d{1,2})?"
-    r"|\b[\d,]+(?:\.\d{1,2})?\s*(?:rupees?|dollars?|lakhs?|crores?)\b",
+    rf"(?:\b(?:Rs\.?|INR|USD)\s*{_NUMBER}(?![\d,]|\.\d)|"
+    rf"(?<!\w)(?:\$|£|€|₹)\s*{_NUMBER}(?![\d,]|\.\d)|"
+    rf"\b{_NUMBER}\s*(?:rupees?|dollars?|lakhs?|crores?)\b)",
     re.IGNORECASE,
 )
 
@@ -47,6 +50,9 @@ def infer_event_type(context: str) -> str:
     """Assign a transparent event cue from the words surrounding a date."""
     text = context.casefold()
     patterns = (
+        # Legal instruments often quote historical government orders or Acts.
+        # Keep those dates distinct from the deed's own execution/payment date.
+        ("legal_reference", r"\b(?:g\.?\s*o\.?\s*(?:m\.?\s*s\.?|no\.)?|government order|section\s+\d+|rule\s+\d+|notification|gazette|proceeding\s+(?:no\.?|number)|under the [\w -]+ act)\b"),
         ("execution", r"\b(sign(?:ed|ing)?|execut(?:ed|ion)|entered into|made this agreement)\b"),
         ("payment", r"\b(paid|payment|remit(?:ted)?|transfer(?:red)?|instal?ment|deposit)\b"),
         ("possession", r"\b(possession|handover|handed over|delivery|vacat(?:e|ed|ion)|occup(?:y|ied|ancy))\b"),
@@ -82,6 +88,11 @@ def extract_dates(doc_id: str, doc_name: str, page: int, text: str) -> list[dict
             interval_roles[second.start()] = (interval_id, "end", relation)
     for m in matches:
         iso = _iso(m)
+        try:
+            date.fromisoformat(iso)
+        except (TypeError, ValueError):
+            # A date-shaped string such as 31/02/2024 is not a calendar date.
+            continue
         start = max(0, m.start() - 80)
         ctx = text[start: m.end() + 80].replace("\n", " ").strip()
         interval = interval_roles.get(m.start())

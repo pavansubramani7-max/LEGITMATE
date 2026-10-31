@@ -45,6 +45,7 @@ def render_document_report(report: dict[str, Any]) -> str:
     topic_score_rows = [[item.get("topic"), item.get("sections"), f"{item.get('coverage_pct', 0)}%", item.get("cue_occurrences")] for item in scorecard.get("topics", [])]
     section_score_rows = [[item.get("section"), item.get("status"), item.get("tokens"), item.get("unique_terms"), f"{item.get('lexical_diversity_pct', 0)}%", f"{item.get('topic_coverage_pct', 0)}%", ", ".join(item.get("topic_cues", [])) or "—", item.get("candidates")] for item in scorecard.get("per_section", [])]
     ocr = report.get("ocr") or {}
+    ocr_detection = ocr.get("language_detection") or {}
     ocr_rows = [[row.get("page"), row.get("recognized_words"), row.get("recognized_characters"), f"{round(float(row.get('alphabetic_share', 0)) * 100)}%", ", ".join(row.get("flags", [])) or "No basic text warning"] for row in ocr.get("quality_signals", [])]
     warnings = "".join(f'<li>{_e(item)}</li>' for item in report.get("warnings", []))
     warnings_html = f'<section class=notice><strong>Review notes</strong><ul>{warnings}</ul></section>' if warnings else ""
@@ -65,7 +66,10 @@ def render_document_report(report: dict[str, Any]) -> str:
         ("Evidence-linked extracted candidates", _table(["Type", "Candidate text", "Source", "Context"], candidate_rows)),
     ]
     if ocr_rows:
-        sections.insert(0, ("Local OCR page review signals", f'<p class=empty>Language: {_e(ocr.get("language", "unknown"))}. These simple text diagnostics are warning indicators only, not OCR confidence scores. Compare every finding with the original page image.</p>{_table(["Page", "Words", "Characters", "Alphabetic share", "Review signals"], ocr_rows)}'))
+        auto_language = (f'<p class=empty>Automatic language selection: {_e(ocr_detection.get("detected_label", "language uncertain"))} → local pack {_e(ocr_detection.get("language", ocr.get("language", "unknown")))} via {_e(ocr_detection.get("method", "local detection"))}.'
+                         + (" A local fallback pack was used because the detected language data is not installed." if ocr_detection.get("fallback") else "")
+                         + "</p>") if ocr_detection else ""
+        sections.insert(0, ("Local OCR page review signals", f'<p class=empty>Language pack: {_e(ocr.get("language", "unknown"))}. These simple text diagnostics are warning indicators only, not OCR confidence scores. Compare every finding with the original page image.</p>{auto_language}{_table(["Page", "Words", "Characters", "Alphabetic share", "Review signals"], ocr_rows)}'))
     sections_html = "".join(f'<section class=card><h2>{_e(title)}</h2>{body}</section>' for title, body in sections)
     return f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

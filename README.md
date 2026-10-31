@@ -132,7 +132,7 @@ For a guided five-minute demonstration and reproducible evaluation commands, see
 The maximum upload size is **200 MB per file**. Supported extensions are PDF, DOCX, DOCM, PPTX, XLSX, TXT, Markdown (`.md`), CSV, JSON, HTML, and RTF. Legacy binary `.doc` files must be converted to DOCX or PDF. Encrypted, damaged, image-only, or unusually formatted documents may not extract correctly.
 
 1. Open **Upload & documents** and select a file.
-2. For scanned PDFs, optionally select **Try local OCR on scanned PDF pages**.
+2. For scanned PDFs, optionally enable **Try local OCR on scanned PDF pages**. LEGITMATE selects the OCR language automatically from readable document text or, when only scans are available, a local Tesseract script estimate.
 3. Review the language estimate, topic cues, candidate findings, and upload report. Open the report or download it as HTML.
 4. Open **Ask a question** and choose a retrieval mode.
 5. Open citations to inspect their source passages. Review candidate facts and possible conflicts instead of treating them as legal conclusions.
@@ -141,7 +141,7 @@ The processing report samples up to 10,000 characters from up to 20 evenly space
 
 ### Optional local OCR
 
-OCR is opt-in and uses Tesseract on this computer; document content is not sent to an OCR service. Install Tesseract and the matching language data, put `tesseract.exe` on `PATH`, then restart the terminal and server. The upload form supports English, Hindi, English+Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Gujarati, Punjabi, Arabic, Spanish, French, and German when those language packs are installed. The workflow targets low-text PDF pages and handles at most 50 OCR pages per file. The report shows simple per-page text-quality warning signals; these are not Tesseract confidence scores and cannot verify the recognized words. Compare names, dates, and amounts with the original page image. OCR quality and multilingual extraction are not covered by the included benchmark.
+OCR is opt-in and uses Tesseract on this computer; document content is not sent to an OCR service. Install Tesseract with the needed local language data, put `tesseract.exe` on `PATH`, then restart the terminal and server. The language is not selected manually: readable text drives a local language estimate, and scan-only PDFs use Tesseract's script detector when its OSD data is installed. For uncertain text, LEGITMATE chooses an installed fallback pack and labels that fallback in the report. Script detection cannot reliably distinguish languages that share a script; Latin-script scans default to English unless readable text provides a stronger estimate. The workflow targets low-text PDF pages and handles at most 50 OCR pages per file. The report shows simple per-page text-quality warning signals; these are not Tesseract confidence scores and cannot verify the recognized words. Compare names, dates, and amounts with the original page image. OCR quality and multilingual extraction are not covered by the included benchmark.
 
 ## Retrieval modes and pretrained models
 

@@ -1,7 +1,122 @@
 from __future__ import annotations
 from typing import Any
 import shutil
-import fitz
+import subprocess
+import re
+import pymupdf as fitz
+
+from app.nlp.language import detect_language
+
+
+_TESSERACT_BY_CODE = {
+    "en": "eng", "hi": "hin", "kn": "kan", "ta": "tam", "te": "tel",
+    "ml": "mal", "bn": "ben", "gu": "guj", "pa": "pan", "ar": "ara",
+    "ru": "rus", "zh": "chi_sim", "es": "spa", "fr": "fra", "de": "deu",
+    "pt": "por", "it": "ita",
+}
+_TESSERACT_BY_SCRIPT = {
+    "Latin": "eng", "Devanagari": "hin", "Kannada": "kan", "Tamil": "tam",
+    "Telugu": "tel", "Malayalam": "mal", "Bengali": "ben", "Gujarati": "guj",
+    "Gurmukhi": "pan", "Arabic": "ara", "Cyrillic": "rus", "Han": "chi_sim",
+}
+
+
+def _installed_tesseract_languages() -> set[str]:
+    executable = shutil.which("tesseract")
+    if not executable:
+        return set()
+    try:
+        result = subprocess.run(
+            [executable, "--list-langs"], capture_output=True, text=True,
+            timeout=8, check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return set()
+    return {line.strip() for line in result.stdout.splitlines()[1:] if re.fullmatch(r"[A-Za-z0-]+", line.strip())}
+
+
+def _osd_script(content: bytes) -> tuple[str | None, str | None]:
+    """Ask local Tesseract OSD to identify the script of a scanned page, if available."""
+    executable = shutil.which("tesseract")
+    if not executable:
+        return None, None
+    try:
+        with fitz.open(stream=content, filetype="pdf") as pdf:
+            for page in pdf:
+                pixmap = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
+                result = subprocess.run(
+                    [executable, "stdin", "stdout", "--psm", "0"],
+                    input=pixmap.tobytes("png"), capture_output=True,
+                    timeout=15, check=False,
+                )
+                diagnostic = result.stderr.decode("utf-8", errors="replace")
+                script = re.search(r"(?im)^Script:\s*(.+?)\s*$", diagnostic)
+                confidence = re.search(r"(?im)^Script confidence:\s*([\d.]+)", diagnostic)
+                if script:
+                    return script.group(1).strip(), confidence.group(1) if confidence else None
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
+        pass
+    return None, None
+
+
+def detect_ocr_language(content: bytes, readable_text: str = "") -> dict[str, Any]:
+    """Choose the best installed local OCR pack from document language or scanned-page script.
+
+    Tesseract's script detector only identifies scripts, not languages. For a scan-only
+    file, Latin script therefore falls back to English; the report makes that uncertainty
+    explicit rather than presenting it as a reliable language classification.
+    """
+    if not shutil.which("tesseract"):
+        raise ValueError(
+            "Local OCR is unavailable because Tesseract is not installed or not on PATH. "
+            "Install Tesseract with local language data, restart the server, then retry. "
+            "Language selection is automatic."
+        )
+    installed = _installed_tesseract_languages()
+    detected = detect_language(readable_text)
+    confidence = float(detected.get("confidence", 0) or 0)
+    code = str(detected.get("code", "und"))
+    requested = _TESSERACT_BY_CODE.get(code) if confidence >= 0.72 else None
+    method = "document text language estimate"
+    script = str(detected.get("script", "Unknown"))
+    if not requested and confidence >= 0.72:
+        requested = _TESSERACT_BY_SCRIPT.get(script)
+        if requested:
+            method = "document writing-system estimate"
+    osd_confidence = None
+    if not requested and not readable_text.strip():
+        script, osd_confidence = _osd_script(content)
+        requested = _TESSERACT_BY_SCRIPT.get(str(script))
+        method = "local Tesseract script detection" if requested else "English fallback; scan script uncertain"
+    if not requested:
+        requested = "eng"
+        method = "English fallback; document language uncertain"
+
+    selected = requested
+    fallback = False
+    if selected not in installed:
+        if "eng" in installed:
+            selected = "eng"
+        else:
+            preferred = ["hin", "tam", "tel", "kan", "mal", "ben", "guj", "pan", "ara", "spa", "fra", "deu", "por", "ita", "chi_sim", "rus"]
+            selected = next((pack for pack in preferred if pack in installed), "")
+        fallback = selected != requested
+    if not selected:
+        raise ValueError(
+            "No usable Tesseract language data is installed. Install a local language pack, "
+            "then retry; language selection is automatic."
+        )
+    return {
+        "language": selected,
+        "detected_code": code,
+        "detected_label": str(detected.get("label", "Undetermined")),
+        "script": script,
+        "confidence": confidence,
+        "method": method,
+        "fallback": fallback,
+        "installed_pack": selected,
+        "osd_script_confidence": osd_confidence,
+    }
 
 
 def ocr_quality_signals(text: str) -> dict[str, Any]:
