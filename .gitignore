@@ -1,0 +1,39 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+data/documents/
+data/processed/
+# Large Kaggle source files stay local; keep source notes/metadata and prep scripts tracked.
+data/raw/indqa/legal_qa.csv
+data/raw/iclec/indian_supreme_court_judgments.csv
+data/raw/opennyaya/nyai-supreme-court-clean/
+data/index.json
+data/index.tmp
+data/sample/*.pdf
+.env*
+!.env.example
+*.egg-info/
+models/e5-kaggle-mix-candidate/
+data/*.sqlite3
+data/*.sqlite3-*
+data/raw/
+work/
+
+# Local diagnostics, exported chat logs, and one-off experiments.
+/_*.py
+/_*.txt
+/_*.log
+/diagnose.py
+/q-dev-chat-*.html
+/q-dev-chat-*.md
+/evaluation_results_*.txt
+/dataset-metadata.json
+/1.0
+# Keep authorized source corpora, reviewer labels, and adjudication packets out of Git.
+data/evaluation/private-corpus/
+data/evaluation/private-reviews/
+private-reviews/
+**/reviewer-*.jsonl
+**/adjudication*.jsonl
+**/adjudicated*.jsonl
