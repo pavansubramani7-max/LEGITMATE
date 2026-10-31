@@ -1,0 +1,17 @@
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+pymupdf>=1.24,<2
+python-multipart>=0.0.9,<1
+numpy>=2.0
+# Semantic retrieval: LSA via TruncatedSVD (torch-free fallback)
+scikit-learn>=1.4
+# Neural multilingual embeddings (primary semantic backend)
+# Model: intfloat/multilingual-e5-small — 384-dim, Apache-2.0, supports English/Hindi/Kannada
+# torch 2.15.0 ships a genuine cp315-cp315-win_amd64 wheel on PyPI.
+torch>=2.15,<3
+sentence-transformers>=3.0,<7
+# pyyaml is a transitive dependency of huggingface-hub (pulled in by sentence-transformers).
+# It does not need to be installed separately.
+# Auth: signed cookies and env loading
+itsdangerous>=2.1,<3
+python-dotenv>=1.0,<2

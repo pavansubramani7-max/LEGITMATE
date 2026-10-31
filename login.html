@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#003a2c">
+  <title>Sign in — LEGITMATE: A Neuro-Symbolic Legal Intelligence Framework for Property &amp; Civil Document Understanding, Evidence–Claim Reasoning, Temporal Knowledge Graphs, and Hybrid GraphRAG</title>
+  <link rel="icon" type="image/png" href="/brand/legitmate-mark.png?v=horse-gold-2026">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--plum:#681943;--plum-deep:#42112f;--gold:#d5b477;--gold-light:#f0dfb8;--ink:#172538;--muted:#778194;--line:#e9e3da;--paper:#fbfaf7}
+    html,body{min-height:100%;font-family:"Times New Roman",Times,serif;color:var(--ink)}
+    body{position:relative;isolation:isolate;min-height:100vh;display:grid;place-items:center;padding:36px;background:radial-gradient(ellipse at 15% 8%,#f0e4d3 0,transparent 32%),#f5f2ed}
+    body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:#e0b65f;opacity:.48;filter:blur(7px);-webkit-mask-image:url("/brand/legitmate-mark.png");mask-image:url("/brand/legitmate-mark.png");-webkit-mask-mode:luminance;mask-mode:luminance;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center 54%;mask-position:center 54%;-webkit-mask-size:min(58vw,620px);mask-size:min(58vw,620px)}
+    :focus-visible{outline:3px solid #c69b58;outline-offset:3px}
+    .login-layout{position:relative;z-index:1;width:min(1120px,100%);min-height:650px;display:grid;grid-template-columns:1.12fr .88fr;overflow:hidden;border:1px solid rgba(78,29,55,.14);border-radius:26px;background:#fff;box-shadow:0 30px 90px rgba(43,23,33,.16)}
+    .brand-panel{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;min-height:650px;padding:42px 48px;color:white;background:radial-gradient(circle at 84% 32%,rgba(221,183,119,.25),transparent 27%),radial-gradient(ellipse at 7% 96%,rgba(147,63,103,.55),transparent 43%),linear-gradient(145deg,#38102d,#621841 58%,#7b2050);overflow:hidden}
+    .brand-panel::before,.brand-panel::after{content:"";position:absolute;z-index:-1;border:1px solid rgba(229,200,145,.2);border-radius:50%;pointer-events:none}
+    .brand-panel::before{width:500px;height:500px;right:-224px;top:126px;box-shadow:0 0 0 30px rgba(229,200,145,.035),0 0 0 75px rgba(229,200,145,.025)}
+    .brand-panel::after{width:340px;height:340px;right:-145px;top:206px}
+    .horse-watermark{position:absolute;z-index:0;top:23%;right:-5%;width:min(88%,560px);height:55%;pointer-events:none;background:#f0c66f;opacity:.42;filter:blur(6px);-webkit-mask-image:url("/brand/legitmate-mark.png");mask-image:url("/brand/legitmate-mark.png");-webkit-mask-mode:luminance;mask-mode:luminance;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+    .brand-top{position:relative;z-index:1;display:flex;align-items:center;gap:13px}
+    .brand-mark{width:47px;height:47px;display:grid;place-items:center;overflow:hidden;padding:4px;border:1px solid rgba(240,223,184,.68);border-radius:14px;color:var(--gold-light);background:#fff;box-shadow:0 8px 20px rgba(19,8,15,.2),inset 0 1px rgba(255,255,255,.18)}
+    .brand-mark img{display:block;width:100%;height:100%;object-fit:contain}
+    .brand-name{font-size:20px;letter-spacing:.17em;font-weight:800}.brand-name span{color:var(--gold)}
+    .brand-caption{margin-top:3px;color:#e3ccd8;font-size:12px;letter-spacing:.045em}
+    .brand-copy{position:relative;z-index:1;max-width:490px;margin:40px 0 0}
+    .eyebrow{display:flex;align-items:center;gap:9px;color:var(--gold-light);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+    .eyebrow::before{content:"";width:24px;height:1px;background:var(--gold)}
+    h1{max-width:480px;margin:18px 0 15px;font-size:clamp(38px,5vw,61px);font-weight:500;line-height:1.02;letter-spacing:-.035em}
+    .brand-copy>p{max-width:440px;color:#e4d4dd;font-size:16px;line-height:1.75}
+    .proof-card{position:relative;width:min(420px,100%);margin:30px 0 0 18px;padding:19px 22px 18px;border:1px solid rgba(240,223,184,.3);border-radius:15px;background:rgba(255,255,255,.1);backdrop-filter:blur(12px);box-shadow:0 18px 40px rgba(25,8,20,.2);transform:rotate(-2deg)}
+    .proof-top{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#f1dba9;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+    .proof-title{margin:13px 0 9px;color:white;font-size:17px}
+    .proof-line{height:5px;margin:7px 0;border-radius:99px;background:rgba(255,255,255,.19)}.proof-line:nth-child(3){width:83%}.proof-line:nth-child(4){width:58%}
+    .proof-highlight{margin:11px 0 8px;padding:9px 11px;border-left:2px solid var(--gold);border-radius:0 6px 6px 0;color:#fbf4e8;background:rgba(226,194,132,.15);font-size:11px;line-height:1.55}
+    .proof-bottom{display:flex;align-items:center;gap:8px;margin-top:12px;color:#e1c7d5;font-size:10px}
+    .proof-dot{width:7px;height:7px;border-radius:50%;background:#9ad0a9;box-shadow:0 0 0 4px rgba(154,208,169,.12)}
+    .brand-foot{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:20px;border-top:1px solid rgba(255,255,255,.15);color:#d5bdcc;font-size:11px}
+    .brand-foot strong{color:#f3dfbd;font-weight:600}
+    .form-panel{display:flex;flex-direction:column;justify-content:center;padding:clamp(34px,6vw,76px);background:linear-gradient(180deg,#fff,#fdfcfb)}
+    .form-kicker{color:#966b48;font-size:11px;font-weight:700;letter-spacing:.17em;text-transform:uppercase}
+    h2{margin:13px 0 7px;color:#3e1831;font-size:clamp(30px,3.2vw,40px);font-weight:500;letter-spacing:-.025em}
+    .form-intro{margin-bottom:32px;color:var(--muted);font-size:14px;line-height:1.7}
+    .field-label{display:block;margin-bottom:8px;color:#394455;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+    .password-wrap{position:relative}
+    input[type=password],input[type=text]{width:100%;height:54px;padding:0 52px 0 15px;border:1px solid #dcd4ca;border-radius:11px;color:var(--ink);background:white;font:16px "Times New Roman",serif;transition:border-color .18s,box-shadow .18s}
+    input:focus{border-color:#ad7d4e;box-shadow:0 0 0 4px rgba(183,121,63,.13);outline:0}
+    .toggle-password{position:absolute;top:50%;right:7px;display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:9px;color:#6f7783;background:transparent;cursor:pointer;transform:translateY(-50%)}
+    .toggle-password:hover{color:var(--plum);background:#f7f1f4}
+    .submit-btn{width:100%;min-height:54px;margin-top:17px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid #551438;border-radius:11px;color:white;background:linear-gradient(110deg,#551438,#76204e);font:700 15px "Times New Roman",serif;cursor:pointer;box-shadow:0 9px 20px rgba(84,20,57,.17);transition:transform .18s,box-shadow .18s,filter .18s}
+    .submit-btn::after{content:"↗";font:18px Arial,sans-serif;color:#f0dcae;transition:transform .18s}
+    .submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 13px 24px rgba(84,20,57,.24);filter:brightness(1.08)}.submit-btn:hover::after{transform:translate(2px,-2px)}
+    .submit-btn:disabled{opacity:.65;cursor:wait}
+    .error-msg{display:none;margin-top:13px;padding:11px 13px;border:1px solid #efd0ce;border-radius:9px;color:#a13f3c;background:#fff4f2;font-size:13px;line-height:1.55}
+    .secure-note{display:flex;gap:11px;margin-top:27px;padding:14px 15px;border:1px solid #eee8df;border-radius:11px;color:#747d88;background:#faf9f6;font-size:12px;line-height:1.65}
+    .secure-note svg{flex:0 0 17px;margin-top:2px;color:#a88050}
+    .research-note{margin-top:17px;color:#9298a1;font-size:11px;line-height:1.6}
+    .privacy-link{margin-top:10px;padding:0;border:0;color:#8b5e2f;background:transparent;font:700 13px "Times New Roman",serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+    .login-layout{animation:login-arrive .66s cubic-bezier(.2,.8,.2,1) both}
+    .brand-panel::before{animation:brand-glow 7s ease-in-out infinite alternate}
+    .brand-panel::after{animation:brand-orbit 12s ease-in-out infinite alternate}
+    .proof-card{animation:proof-float 6s ease-in-out infinite}
+    .form-panel{animation:form-arrive .72s .08s cubic-bezier(.2,.8,.2,1) both}
+    .form-kicker{font-size:12px}.form-intro{font-size:16px}.field-label{font-size:14px}
+    input[type=password],input[type=text]{font-size:18px}
+    .submit-btn{font-size:17px}
+    .secure-note{font-size:14px}.research-note{font-size:13px}.brand-foot{font-size:12px}
+    .brand-caption{font-size:15px}.eyebrow{font-size:14px}.proof-top{font-size:13px}.proof-title{font-size:19px}.proof-highlight{font-size:15px}.proof-bottom{font-size:14px}.brand-foot{font-size:13px}.form-kicker{font-size:14px}.form-intro{font-size:17px}.field-label{font-size:15px}.secure-note,.research-note{font-size:15px}.privacy-link{font-size:15px}.error-msg{font-size:15px}.login-privacy-body p{font-size:16px}
+    .error-msg{animation:error-arrive .25s ease-out both}
+    .login-privacy-dialog{width:min(620px,calc(100vw - 26px));max-width:none;margin:auto;padding:0;overflow:hidden;border:1px solid #ead8e1;border-radius:20px;color:var(--ink);background:#fff;box-shadow:0 30px 90px rgba(35,9,26,.35)}
+    .login-privacy-dialog::backdrop{background:rgba(35,9,26,.62);backdrop-filter:blur(8px);animation:privacy-shade .22s ease-out both}
+    .login-privacy-head{display:flex;align-items:center;gap:12px;padding:19px 22px;color:white;background:radial-gradient(circle at 95% 0,rgba(231,195,129,.24),transparent 26%),linear-gradient(108deg,#42112f,#76204e)}
+    .login-privacy-head h2{flex:1;margin:0;color:white;font-size:24px}
+    .login-privacy-body{padding:20px 23px 23px}
+    .login-privacy-body p{margin:0 0 12px;color:#625d66;font-size:15px;line-height:1.7}
+    .login-privacy-body p:last-child{margin:0}
+    .login-privacy-close{width:38px;height:38px;border:1px solid rgba(255,255,255,.35);border-radius:50%;color:#fff;background:rgba(255,255,255,.08);font-size:24px;cursor:pointer}
+    .login-privacy-dialog[open]{animation:login-modal-arrive .3s cubic-bezier(.2,.8,.2,1) both}
+    @keyframes login-arrive{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
+    @keyframes form-arrive{from{opacity:0;transform:translateX(15px)}to{opacity:1;transform:none}}
+    @keyframes proof-float{0%,100%{translate:0 0;rotate:-2deg}50%{translate:0 -7px;rotate:-1deg}}
+    @keyframes brand-glow{from{opacity:.55;transform:scale(.96)}to{opacity:1;transform:scale(1.03)}}
+    @keyframes brand-orbit{from{transform:rotate(-6deg) scale(.98)}to{transform:rotate(7deg) scale(1.03)}}
+    @keyframes error-arrive{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+    @keyframes login-modal-arrive{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+    @keyframes privacy-shade{from{opacity:0}to{opacity:1}}
+    @media(max-width:780px){body{padding:18px}.login-layout{max-width:540px;min-height:0;grid-template-columns:1fr;border-radius:20px}.brand-panel{min-height:390px;padding:28px 30px 22px}.brand-copy{margin:28px 0 0}.brand-copy h1{font-size:43px}.proof-card{position:absolute;width:230px;right:24px;bottom:48px;margin:0;opacity:.9;transform:rotate(3deg) scale(.8);transform-origin:right bottom}.brand-foot{font-size:10px}.form-panel{padding:34px 30px 30px}}
+    @media(max-width:480px){body{padding:0;background:#fff}.login-layout{min-height:100vh;border:0;border-radius:0;box-shadow:none}.brand-panel{min-height:310px;padding:23px 22px 18px}.brand-mark{width:41px;height:41px}.brand-name{font-size:17px}.brand-copy{margin-top:25px}.brand-copy h1{max-width:320px;margin:13px 0 10px;font-size:37px}.brand-copy>p{max-width:330px;font-size:15px}.proof-card{display:none}.brand-foot{padding-top:13px}.form-panel{justify-content:flex-start;padding:32px 23px 28px}.form-intro{margin-bottom:25px}}
+    html{font-size:100%}body{font-size:18px}.form-intro,.brand-copy>p,.secure-note,.research-note,.login-privacy-body p{font-size:16px}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+  
+/* Clearer type and premium detail */
+html,body{font-family:"Segoe UI",Inter,Arial,sans-serif}
+body{padding:clamp(14px,4vw,42px);background:radial-gradient(ellipse at 12% 8%,#efe1d5 0,transparent 34%),radial-gradient(ellipse at 92% 92%,#f1e3e8 0,transparent 34%),#f7f3f0}
+.login-layout{width:min(1240px,100%);min-height:710px;border-radius:30px;box-shadow:0 34px 100px rgba(43,23,33,.2)}
+.brand-panel{min-height:710px;padding:clamp(32px,4.5vw,58px);background:radial-gradient(circle at 84% 32%,rgba(221,183,119,.29),transparent 27%),radial-gradient(ellipse at 7% 96%,rgba(147,63,103,.55),transparent 43%),linear-gradient(145deg,#351029,#60163f 58%,#842252)}
+.brand-name{font-family:Georgia,"Times New Roman",serif;font-size:22px}
+.brand-caption{font-size:14px}
+.eyebrow,.form-kicker{font-size:13px;letter-spacing:.16em}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(42px,5.3vw,68px);line-height:1.04}
+.brand-copy>p{font-size:18px;line-height:1.8}
+.proof-title{font-family:Georgia,"Times New Roman",serif;font-size:21px}
+.proof-highlight{font-size:14px;line-height:1.7}
+.proof-top,.proof-bottom,.brand-foot{font-size:13px}
+.form-panel{padding:clamp(36px,6vw,84px)}
+h2{font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,3.4vw,44px)}
+.form-intro{font-size:17px;line-height:1.8}
+.field-label{font-size:14px;letter-spacing:.08em}
+input[type=password],input[type=text]{height:58px;padding-left:17px;font:17px "Segoe UI",Inter,Arial,sans-serif}
+.submit-btn{min-height:58px;font:700 16px "Segoe UI",Inter,Arial,sans-serif}
+.login-note,.privacy-link{font-family:"Segoe UI",Inter,Arial,sans-serif;font-size:14px;line-height:1.75}
+.login-privacy-dialog{width:min(700px,calc(100vw - 30px));max-height:calc(100vh - 30px);padding:0;border:1px solid #dfc99f;border-radius:24px;background:#fffdfa;box-shadow:0 34px 100px rgba(43,12,31,.38)}
+.login-privacy-dialog::backdrop{background:rgba(42,12,30,.64);backdrop-filter:blur(8px)}
+.login-privacy-head{position:sticky;top:0;z-index:1;padding:19px 23px;background:linear-gradient(110deg,#511331,#761744 60%,#962257)}
+.login-privacy-head h2{font-family:Georgia,"Times New Roman",serif;font-size:25px}
+.login-privacy-body{padding:24px;font-size:16px;line-height:1.8}
+@keyframes login-dialog-rise{from{opacity:0;transform:translateY(14px) scale(.975)}to{opacity:1;transform:none}}
+.login-privacy-dialog[open]{animation:login-dialog-rise .22s cubic-bezier(.2,.8,.2,1)}
+@media(max-width:760px){.login-layout{grid-template-columns:1fr;min-height:0}.brand-panel{min-height:430px;padding:32px}.brand-copy{margin:38px 0 32px}.proof-card{margin-left:0}.brand-foot{margin-top:12px}.form-panel{padding:34px}}
+@media(max-width:420px){body{padding:10px}.login-layout{border-radius:20px}.brand-panel{min-height:380px;padding:24px}.brand-copy{margin:30px 0 25px}h1{font-size:42px}.form-panel{padding:28px 22px}.login-privacy-body{padding:18px}}
+
+/* Times New Roman · premium animated interface */
+*,*::before,*::after{font-family:"Times New Roman",Times,serif!important}
+body{font-size:18px;line-height:1.7;letter-spacing:.005em}
+button,input,textarea,select{font-family:"Times New Roman",Times,serif!important;font-size:17px}
+.app-header{min-height:82px;box-shadow:0 10px 30px rgba(58,13,38,.16)}
+.logo{font-size:21px;letter-spacing:.18em}
+.nav-item{font-size:16px;min-height:46px}
+.page-hdr h1{font-size:clamp(38px,4.5vw,54px);letter-spacing:-.025em}
+.page-hdr p{font-size:18px;line-height:1.8}
+.card-hdr h2{font-size:22px}
+.btn{font-size:16px;letter-spacing:.01em}
+.field-label,.account-form label{font-size:16px}
+.badge{font-size:13px}
+.doc-name,.overview-doc strong{font-size:17px}
+.doc-meta,.overview-doc span,.overview-note,.overview-empty,.upload-hint,.status-msg{font-size:15px}
+.chat-input-row textarea,.answer-text{font-size:18px;line-height:1.85}
+.answer-text .ans-quote{font-size:17px}
+.answer-text .ans-source,.answer-text .ans-bullet,.answer-text .ans-notice{font-size:15px}
+.overview-hero h2{font-size:clamp(38px,4.6vw,56px)}
+.overview-hero p{font-size:18px;line-height:1.85}
+.overview-metric strong{font-size:34px}
+.overview-metric span{font-size:13px}
+.collection-card strong{font-size:20px}
+.collection-card span:last-child{font-size:15px;line-height:1.65}
+/* Prominent, consistent evidence and account dialogs */
+dialog{font-size:18px;overscroll-behavior:contain}
+dialog::backdrop{background:rgba(42,10,29,.66);backdrop-filter:blur(10px) saturate(.82)}
+.account-dialog,.privacy-dialog,.command-dialog,.report-dialog{border:1px solid rgba(213,180,119,.8);box-shadow:0 40px 120px rgba(33,6,22,.45),0 0 0 1px rgba(255,255,255,.24) inset}
+.account-dialog-head,.report-dialog-head{padding:23px 28px;background:linear-gradient(115deg,#40102c,#721642 60%,#98245e)}
+.account-dialog-head h2,.report-dialog-head strong,.privacy-dialog h2,.command-dialog h2{font-size:29px;letter-spacing:-.01em}
+.account-dialog-body,.report-dialog-body{padding:28px}
+.account-help,.login-privacy-body,.full-report-note{font-size:17px;line-height:1.8}
+.account-list th,.account-list td{font-size:16px;padding:13px 11px}
+.ev-popup{width:min(820px,calc(100vw - 36px));max-height:min(86vh,920px);padding:34px;border:1px solid #d5b477;border-radius:26px;box-shadow:0 38px 120px rgba(30,5,20,.48)}
+.ev-popup-title{font-size:28px}
+.ev-popup-passage{font-size:18px;line-height:1.9;padding:22px}
+.ev-popup-score{font-size:15px}
+.lm-toast{border-color:#dcc38f;border-radius:20px;box-shadow:0 24px 70px rgba(52,15,38,.28)}
+.lm-toast-title{font-size:17px}
+.lm-toast-message{font-size:15px;line-height:1.65}
+.lm-toast-action{font-size:15px}
+.lm-toast-icon{width:40px;height:40px}
+/* Smooth page changes and lift on interactive surfaces */
+.panel.active{animation:lm-page-reveal .42s cubic-bezier(.2,.75,.25,1) both}
+@keyframes lm-page-reveal{from{opacity:0;transform:translateY(16px);filter:blur(2px)}to{opacity:1;transform:none;filter:blur(0)}}
+.collection-card,.overview-metric,.card,.lab-card,.btn,.nav-item{transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease,border-color .24s ease,background-color .24s ease}
+.collection-card:hover,.overview-metric:hover,.card:hover,.lab-card:hover{transform:translateY(-3px);box-shadow:0 20px 48px rgba(77,15,48,.12)}
+.btn-primary{background:linear-gradient(115deg,#64143c,#9b205c 58%,#b32c6b);box-shadow:0 9px 24px rgba(104,17,61,.24)}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 30px rgba(104,17,61,.3)}
+:focus-visible{outline:3px solid rgba(194,154,83,.75);outline-offset:3px}
+@media(max-width:760px){body{font-size:17px}.page-hdr h1{font-size:38px}.page-hdr p{font-size:17px}.account-dialog-body,.report-dialog-body{padding:18px}.ev-popup{padding:24px 19px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* Readable login copy and refined animated privacy dialog */
+body{font-size:18px;line-height:1.75}
+.brand-caption,.proof-top,.proof-bottom,.brand-foot{font-size:14px;line-height:1.6}
+.brand-copy>p,.form-intro,.secure-note,.research-note,.login-note,.privacy-link{font-size:17px;line-height:1.8}
+.field-label{font-size:16px;line-height:1.5}
+input[type=password],input[type=text]{font-size:18px}
+.submit-btn{font-size:18px}
+.login-privacy-body p{font-size:17px;line-height:1.8}
+.login-privacy-dialog{border-color:rgba(205,168,101,.82);box-shadow:0 40px 120px rgba(35,7,25,.44),0 1px 0 rgba(255,255,255,.75) inset}
+.login-privacy-dialog::backdrop{background:rgba(35,9,26,.68);backdrop-filter:blur(11px) saturate(.82)}
+.login-privacy-dialog[open]{animation:login-premium-enter .34s cubic-bezier(.2,.8,.2,1) both}
+@keyframes login-premium-enter{from{opacity:0;transform:translateY(18px) scale(.965);filter:blur(3px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@media(max-width:600px){.brand-copy>p,.form-intro,.secure-note,.research-note,.login-note,.privacy-link,.login-privacy-body p{font-size:16px}.field-label{font-size:15px}.login-privacy-body{padding:19px}}
+@media(prefers-reduced-motion:reduce){.login-privacy-dialog[open]{animation:none!important}}
+
+/* Golden horse identity */
+.brand-mark{width:62px;height:47px;flex:0 0 auto;padding:0;overflow:hidden;border:1px solid rgba(230,199,126,.95);border-radius:13px;background:#003a2c;box-shadow:0 10px 24px rgba(0,0,0,.24),0 0 0 4px rgba(222,190,119,.11);transition:transform .3s ease,box-shadow .3s ease}
+.brand-mark img{width:100%;height:100%;object-fit:cover}
+.brand-top .brand-mark:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.28),0 0 0 5px rgba(222,190,119,.16)}
+.brand-panel{background:radial-gradient(circle at 84% 32%,rgba(221,183,119,.2),transparent 27%),radial-gradient(ellipse at 7% 96%,rgba(30,107,81,.55),transparent 43%),linear-gradient(145deg,#032c23,#064536 58%,#0b5b43)}
+.brand-panel::before,.brand-panel::after{border-color:rgba(229,200,145,.23)}
+.brand-panel::before{box-shadow:0 0 0 30px rgba(229,200,145,.04),0 0 0 75px rgba(229,200,145,.03)}
+.brand-name span{color:#e0bd71}
+.brand-caption{color:#fff0c5;text-shadow:0 1px 9px rgba(255,226,158,.22)}
+.proof-card{border-color:rgba(224,194,124,.36);background:rgba(0,37,29,.32)}
+.proof-highlight{border-left-color:#dfbb6c;background:rgba(226,194,132,.12)}
+.brand-foot strong{color:#f3dfbd}
+.submit-btn{border-color:#064331;background:linear-gradient(110deg,#034331,#0c654b);box-shadow:0 9px 22px rgba(3,67,49,.22)}
+.submit-btn:hover:not(:disabled){box-shadow:0 14px 28px rgba(3,67,49,.3)}
+.login-privacy-head{position:relative;isolation:isolate;overflow:hidden;border-bottom:1px solid rgba(255,226,165,.5);background:radial-gradient(ellipse at 92% 0,rgba(255,224,151,.3),transparent 36%),linear-gradient(110deg,#033b2c,#07543e 60%,#0b6a4b)}
+.login-privacy-head::after{position:absolute;z-index:-1;top:-58px;right:7%;width:170px;height:170px;border:1px solid rgba(255,231,181,.23);border-radius:50%;content:"";box-shadow:0 0 0 17px rgba(255,231,181,.035),0 0 0 38px rgba(255,231,181,.025);pointer-events:none}
+.login-privacy-dialog{border-color:rgba(230,195,119,.9);box-shadow:0 0 0 1px rgba(255,255,255,.3) inset,0 0 44px rgba(221,187,111,.15),0 40px 120px rgba(35,7,25,.44)}
+.login-privacy-close{transition:transform .22s ease,background-color .22s ease,box-shadow .22s ease}
+.login-privacy-close:hover{transform:rotate(5deg) scale(1.06);box-shadow:0 0 0 4px rgba(255,231,181,.16)}
+@media(max-width:480px){.brand-mark{width:52px;height:39px}}
+@media(max-width:600px){body::before{-webkit-mask-size:min(82vw,420px);mask-size:min(82vw,420px);opacity:.34}.horse-watermark{top:22%;right:-7%;width:90%;height:52%;opacity:.36}}
+@media(prefers-reduced-motion:reduce){.brand-mark,.brand-top .brand-mark:hover,.login-privacy-close:hover{transition:none;transform:none}}
+</style>
+</head>
+<body>
+<main class="login-layout">
+  <section class="brand-panel" aria-label="About LEGITMATE">
+    <div class="horse-watermark" aria-hidden="true"></div>
+    <div class="brand-top">
+      <div class="brand-mark" aria-hidden="true"><img src="/brand/legitmate-mark.png?v=horse-gold-2026" alt=""></div>
+      <div><div class="brand-name">LEGIT<span>MATE</span></div><div class="brand-caption">Private legal research workspace</div></div>
+    </div>
+    <div class="brand-copy">
+      <div class="eyebrow">Evidence, brought into focus</div>
+      <h1>Every detail.<br>Backed by its source.</h1>
+      <p>Bring property and civil documents together. Explore key facts, dates, statements and differences with a direct path back to the original passage.</p>
+      <div class="proof-card" aria-hidden="true">
+        <div class="proof-top"><span>Document intelligence</span><span>PAGE 01</span></div>
+        <div class="proof-title">Sale deed · Source passage</div>
+        <div class="proof-line"></div><div class="proof-line"></div>
+        <div class="proof-highlight">“The consideration for the property is recorded in this deed…”</div>
+        <div class="proof-bottom"><i class="proof-dot"></i> Finding linked to its source location</div>
+      </div>
+    </div>
+    <div class="brand-foot"><span><strong>LEGITMATE</strong> · Legal document intelligence</span><span>LOCAL WORKSPACE</span></div>
+  </section>
+  <section class="form-panel" aria-labelledby="signInTitle">
+    <div class="form-kicker">Welcome to your workspace</div>
+    <h2 id="signInTitle">Sign in</h2>
+    <p class="form-intro">Sign in with the username and password assigned to your LEGITMATE account.</p>
+    <form id="loginForm" novalidate>
+      <label class="field-label" for="username">Username</label>
+      <input type="text" id="username" name="username" autocomplete="username" required autofocus placeholder="Enter your username" style="padding-right:15px;margin-bottom:17px">
+      <label class="field-label" for="password">Workspace password</label>
+      <div class="password-wrap">
+        <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Enter your password">
+        <button class="toggle-password" id="togglePassword" type="button" aria-label="Show password" title="Show password"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 10s2.8-5 8-5 8 5 8 5-2.8 5-8 5-8-5-8-5Z"/><circle cx="10" cy="10" r="2.2"/></svg></button>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">Enter workspace</button>
+      <div class="error-msg" id="errorMsg" role="alert" aria-live="polite"></div>
+    </form>
+    <div class="secure-note"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="12" height="9" rx="2"/><path d="M7 9V6a3 3 0 0 1 6 0v3"/></svg><span>Each account has its own document workspace. Signing in does not send your files to an AI service.</span></div>
+    <p class="research-note">Research prototype. Extracted findings may be incomplete and should be checked against the original documents. LEGITMATE does not provide legal advice.</p>
+    <button class="privacy-link" id="loginPrivacyOpen" type="button">Explore privacy and AI data flow</button>
+  </section>
+</main>
+<dialog class="login-privacy-dialog" id="loginPrivacyDialog" aria-labelledby="loginPrivacyTitle">
+  <div class="login-privacy-head"><div class="brand-mark" aria-hidden="true"><img src="/brand/legitmate-mark.png?v=horse-gold-2026" alt=""></div><h2 id="loginPrivacyTitle">Privacy and data flow</h2><button type="button" class="login-privacy-close" id="loginPrivacyClose" aria-label="Close privacy details">×</button></div>
+  <div class="login-privacy-body">
+    <p><strong>Accounts and files:</strong> customers have separate account credentials and local document workspaces. Signing in does not send files to an AI service.</p>
+    <p><strong>Document AI draft:</strong> only when selected, the question and matching text excerpts are sent to the configured Gemini or Groq provider.</p>
+    <p><strong>Live AI chat:</strong> sends the chat message and recent turns to the configured provider. It does not attach document files or retrieved passages.</p>
+    <p><strong>Protection limits:</strong> account passwords are salted and hashed, but stored documents are plain local files and are not encrypted by the app. Use this only on a trusted, OS-protected device.</p>
+    <p><strong>Strict local-only:</strong> set <code>AI_PROVIDER=off</code> in <code>.env</code> to block external AI calls at the server, then restart the app.</p>
+  </div>
+</dialog>
+<script>
+document.getElementById('loginPrivacyOpen').addEventListener('click', () => document.getElementById('loginPrivacyDialog').showModal());
+document.getElementById('loginPrivacyClose').addEventListener('click', () => document.getElementById('loginPrivacyDialog').close());
+document.getElementById('loginPrivacyDialog').addEventListener('click', event => { if (event.target === event.currentTarget) event.currentTarget.close(); });
+document.getElementById('togglePassword').addEventListener('click', function () {
+  const input = document.getElementById('password');
+  const visible = input.type === 'password';
+  input.type = visible ? 'text' : 'password';
+  this.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+  this.title = visible ? 'Hide password' : 'Show password';
+  input.focus();
+});
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const err = document.getElementById('errorMsg');
+  const username = document.getElementById('username').value.trim();
+  const pw = document.getElementById('password').value;
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  err.style.display = 'none';
+  try {
+    const r = await fetch('/api/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:pw}),credentials:'same-origin'});
+    const d = await r.json();
+    if (!r.ok) { err.textContent = d.detail || 'Sign-in failed.'; err.style.display = 'block'; document.getElementById('password').value = ''; document.getElementById('password').focus(); return; }
+    sessionStorage.setItem('lm_csrf', d.csrf);
+    window.location.href = '/';
+  } catch (_) { err.textContent = 'Could not reach the server. Is it running?'; err.style.display = 'block'; }
+  finally { btn.disabled = false; btn.innerHTML = 'Enter workspace'; }
+});
+</script>
+</body>
+</html>

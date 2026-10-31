@@ -1,0 +1,497 @@
+[
+  {
+    "id": "PC-01",
+    "category": "financial",
+    "question": "What total sale consideration does the written deed state?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "Rs. 500000"
+      ]
+    ]
+  },
+  {
+    "id": "PC-02",
+    "category": "financial",
+    "question": "What sale price does the notice say was verbally agreed?",
+    "evidence": [
+      [
+        "sample_dispute_letter.pdf",
+        1,
+        "Rs. 550000"
+      ]
+    ]
+  },
+  {
+    "id": "PC-03",
+    "category": "conflict",
+    "question": "What written and verbally agreed sale prices are reported?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "Rs. 500000"
+      ],
+      [
+        "sample_dispute_letter.pdf",
+        1,
+        "Rs. 550000"
+      ]
+    ]
+  },
+  {
+    "id": "PC-04",
+    "category": "dates",
+    "question": "When was the sale deed executed according to the deed itself?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "15 March 2023"
+      ]
+    ]
+  },
+  {
+    "id": "PC-05",
+    "category": "dates",
+    "question": "Which execution date does the notice say is on the other copy?",
+    "evidence": [
+      [
+        "sample_dispute_letter.pdf",
+        1,
+        "20 March 2023"
+      ]
+    ]
+  },
+  {
+    "id": "PC-06",
+    "category": "conflict",
+    "question": "What execution dates do the deed and dispute letter report?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "15 March 2023"
+      ],
+      [
+        "sample_dispute_letter.pdf",
+        1,
+        "20 March 2023"
+      ]
+    ]
+  },
+  {
+    "id": "PC-07",
+    "category": "parties",
+    "question": "Who is named as seller in the sale deed?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "Rajesh Kumar Sharma"
+      ]
+    ]
+  },
+  {
+    "id": "PC-08",
+    "category": "parties",
+    "question": "Who is named as buyer in the sale deed?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "Priya Anand Verma"
+      ]
+    ]
+  },
+  {
+    "id": "PC-09",
+    "category": "parties",
+    "question": "Who sent the legal notice?",
+    "evidence": [
+      [
+        "sample_dispute_letter.pdf",
+        1,
+        "Priya Anand Verma"
+      ]
+    ]
+  },
+  {
+    "id": "PC-10",
+    "category": "property",
+    "question": "What survey number is associated with the sale property?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "Survey No. 44/B"
+      ]
+    ]
+  },
+  {
+    "id": "PC-11",
+    "category": "property",
+    "question": "Where is the plot described in the sale deed located?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "Sector 9, Jaipur Development Authority Layout, Jaipur"
+      ]
+    ]
+  },
+  {
+    "id": "PC-12",
+    "category": "property",
+    "question": "Does the deed state the property is free of encumbrances?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        1,
+        "free from all encumbrances"
+      ]
+    ]
+  },
+  {
+    "id": "PC-13",
+    "category": "obligations",
+    "question": "By what date must the buyer pay the full sale price?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        2,
+        "31 March 2023"
+      ]
+    ]
+  },
+  {
+    "id": "PC-14",
+    "category": "obligations",
+    "question": "When must the seller hand over vacant possession?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        2,
+        "on receipt of full payment"
+      ]
+    ]
+  },
+  {
+    "id": "PC-15",
+    "category": "obligations",
+    "question": "Through what date does the deed say property taxes were paid?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        2,
+        "14 March 2023"
+      ]
+    ]
+  },
+  {
+    "id": "PC-16",
+    "category": "obligations",
+    "question": "Which state's laws govern the sale agreement?",
+    "evidence": [
+      [
+        "sample_sale_deed.pdf",
+        2,
+        "laws of Rajasthan"
+      ]
+    ]
+  },
+  {
+    "id": "PC-17",
+    "category": "financial",
+    "question": "What monthly rent is stated in the lease?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "Rs. 25000 per month"
+      ]
+    ]
+  },
+  {
+    "id": "PC-18",
+    "category": "financial",
+    "question": "By which day of each month is rent due?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "on or before the 5th of each month"
+      ]
+    ]
+  },
+  {
+    "id": "PC-19",
+    "category": "financial",
+    "question": "What security deposit and payment date are stated?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "Rs. 75000"
+      ],
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "28 December 2022"
+      ]
+    ]
+  },
+  {
+    "id": "PC-20",
+    "category": "dates",
+    "question": "When does the lease term commence?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "1 January 2023"
+      ]
+    ]
+  },
+  {
+    "id": "PC-21",
+    "category": "dates",
+    "question": "When does the lease term end?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "31 December 2023"
+      ]
+    ]
+  },
+  {
+    "id": "PC-22",
+    "category": "parties",
+    "question": "Who is identified as the lessor?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "Vikram Singh Rathore"
+      ]
+    ]
+  },
+  {
+    "id": "PC-23",
+    "category": "parties",
+    "question": "Who is identified as the lessee?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "Meena Krishnamurthy"
+      ]
+    ]
+  },
+  {
+    "id": "PC-24",
+    "category": "property",
+    "question": "Which flat and apartment are covered by the lease?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        1,
+        "Flat No. 5B, Sunrise Apartments"
+      ]
+    ]
+  },
+  {
+    "id": "PC-25",
+    "category": "obligations",
+    "question": "What use of the premises does the lease permit?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        2,
+        "only for residential purposes"
+      ]
+    ]
+  },
+  {
+    "id": "PC-26",
+    "category": "obligations",
+    "question": "Can the lessee sublet without written consent?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        2,
+        "without written consent of the Lessor"
+      ]
+    ]
+  },
+  {
+    "id": "PC-27",
+    "category": "obligations",
+    "question": "What does the lease require about maintaining the premises?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        2,
+        "Maintain the premises in good condition"
+      ]
+    ]
+  },
+  {
+    "id": "PC-28",
+    "category": "obligations",
+    "question": "Who pays utility bills during the lease term?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        2,
+        "Pay all utility bills during the lease term"
+      ]
+    ]
+  },
+  {
+    "id": "PC-29",
+    "category": "claims",
+    "question": "What does the lessor warrant about residential occupation?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        2,
+        "fit for residential occupation"
+      ]
+    ]
+  },
+  {
+    "id": "PC-30",
+    "category": "claims",
+    "question": "Who does the lease say holds clear title?",
+    "evidence": [
+      [
+        "sample_lease_agreement.pdf",
+        2,
+        "Vikram Singh Rathore"
+      ]
+    ]
+  },
+  {
+    "id": "PC-31",
+    "category": "unsupported",
+    "question": "What zoning classification is stated for the property?",
+    "evidence": []
+  },
+  {
+    "id": "PC-32",
+    "category": "unsupported",
+    "question": "What is the court case number?",
+    "evidence": []
+  },
+  {
+    "id": "PC-33",
+    "category": "unsupported",
+    "question": "What is the registered mortgage account number?",
+    "evidence": []
+  },
+  {
+    "id": "PC-34",
+    "category": "unsupported",
+    "question": "What building permit number is listed?",
+    "evidence": []
+  },
+  {
+    "id": "PC-35",
+    "category": "unsupported",
+    "question": "What renewal rent does the lease specify for 2024?",
+    "evidence": []
+  },
+  {
+    "id": "PC-36",
+    "category": "unsupported",
+    "question": "Which court has jurisdiction over this property dispute?",
+    "evidence": []
+  },
+  {
+    "id": "PC2-37",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "Which municipal ward number covers the sale property?"
+  },
+  {
+    "id": "PC2-38",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "What are the east and west boundary measurements of Plot No. 118?"
+  },
+  {
+    "id": "PC2-39",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "What is the sale deed registration number?"
+  },
+  {
+    "id": "PC2-40",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "Which sub-registrar office registered the deed?"
+  },
+  {
+    "id": "PC2-41",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "How much stamp duty was paid and on what date?"
+  },
+  {
+    "id": "PC2-42",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "What is the property circle rate or guideline value?"
+  },
+  {
+    "id": "PC2-43",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "Which receipt number proves the property tax payment?"
+  },
+  {
+    "id": "PC2-44",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "What full bank account number received the NEFT transfer?"
+  },
+  {
+    "id": "PC2-45",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "What electricity meter number is assigned to Flat No. 5B?"
+  },
+  {
+    "id": "PC2-46",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "How many bedrooms does Flat No. 5B have?"
+  },
+  {
+    "id": "PC2-47",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "What date did the court issue an injunction in this dispute?"
+  },
+  {
+    "id": "PC2-48",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "What is the buyer phone number?"
+  },
+  {
+    "id": "PC2-49",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "How many square metres is the plot area?"
+  },
+  {
+    "id": "PC2-50",
+    "evidence": [],
+    "category": "unsupported",
+    "question": "What is the mortgage account number on the property?"
+  }
+]

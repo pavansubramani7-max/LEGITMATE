@@ -1,0 +1,74 @@
+{
+  "benchmark": "LEGITMATE sample property/civil extraction benchmark",
+  "version": 1,
+  "corpus": "Three bundled synthetic documents; labels manually transcribed from the PDF text.",
+  "source_files": [
+    "sample_sale_deed.pdf",
+    "sample_dispute_letter.pdf",
+    "sample_lease_agreement.pdf"
+  ],
+  "entities": {
+    "person": [
+      "Rajesh Kumar Sharma",
+      "Mohan Lal Sharma",
+      "Priya Anand Verma",
+      "Suresh Anand Verma",
+      "Anil Mehta",
+      "Sunita Rao",
+      "Vikram Singh Rathore",
+      "Meena Krishnamurthy"
+    ],
+    "org": [
+      "Jaipur Development Authority",
+      "InfoTech Ltd"
+    ],
+    "property": [
+      "Plot No. 118",
+      "Survey No. 44/B",
+      "Flat No. 5B"
+    ]
+  },
+  "dates": [
+    "10 April 2023",
+    "15 March 2023",
+    "20 March 2023",
+    "22 March 2023",
+    "31 March 2023",
+    "14 March 2023",
+    "1 January 2023",
+    "31 December 2023",
+    "28 December 2022"
+  ],
+  "amounts": [
+    "Rs. 500000",
+    "Rs. 550000",
+    "Rs. 250000",
+    "Rs. 300000",
+    "Rs. 25000",
+    "Rs. 75000"
+  ],
+  "claims": [
+    ["sample_dispute_letter.pdf", 1, "I write to bring to your attention a discrepancy in the sale deed executed between us."],
+    ["sample_dispute_letter.pdf", 1, "The deed in my possession states the execution date as 20 March 2023, whereas your copy states 15 March 2023."],
+    ["sample_dispute_letter.pdf", 1, "Furthermore, the agreed sale price as per our verbal agreement was Rs. 550000 (Rupees Five Lakh Fifty Thousand), not Rs. 500000 as stated in the written deed."],
+    ["sample_dispute_letter.pdf", 1, "I request you to clarify these discrepancies within 7 days of receipt of this notice, failing which I shall be constrained to seek appropriate legal remedy."],
+    ["sample_dispute_letter.pdf", 2, "Payment of Rs. 250000 made on 22 March 2023 via NEFT transfer to account of Rajesh Kumar Sharma."],
+    ["sample_dispute_letter.pdf", 2, "The Buyer disputes the total sale consideration stated in the written deed and claims the agreed amount was Rs. 550000."],
+    ["sample_lease_agreement.pdf", 1, "Rs. 75000 paid by the Lessee to the Lessor on 28 December 2022."],
+    ["sample_lease_agreement.pdf", 2, "Use the premises only for residential purposes."],
+    ["sample_lease_agreement.pdf", 2, "Not sublet or assign the premises without written consent of the Lessor."],
+    ["sample_lease_agreement.pdf", 2, "Maintain the premises in good condition."],
+    ["sample_lease_agreement.pdf", 2, "Pay all utility bills during the lease term."],
+    ["sample_lease_agreement.pdf", 2, "The Lessor warrants that the property is fit for residential occupation and that Vikram Singh Rathore holds clear title to the property."],
+    ["sample_sale_deed.pdf", 1, "The Buyer agrees to pay and the Seller agrees to accept a total sale consideration of Rs. 500000 (Rupees Five Lakh Only) for the above-described property."],
+    ["sample_sale_deed.pdf", 1, "The Seller warrants that the property is free from all encumbrances, liens, and third-party claims as of the date of this deed."],
+    ["sample_sale_deed.pdf", 2, "The Buyer shall pay the full sale price on or before 31 March 2023."],
+    ["sample_sale_deed.pdf", 2, "The Seller shall hand over vacant possession of the property on receipt of full payment."],
+    ["sample_sale_deed.pdf", 2, "The Seller confirms that all property taxes up to 14 March 2023 have been paid in full."]
+  ],
+  "known_conflicts": [
+    {"kind": "date", "values": ["15 March 2023", "20 March 2023"], "topic": "execution date"},
+    {"kind": "amount", "values": ["Rs. 500000", "Rs. 550000"], "topic": "sale consideration"}
+  ],
+  "license": "Synthetic documents generated for this project; no external dataset license applies."
+}
