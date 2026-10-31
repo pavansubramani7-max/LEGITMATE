@@ -298,7 +298,7 @@ data/sample/                        Synthetic demonstration PDFs
 data/evaluation/                    Versioned synthetic benchmark labels
 data/pipeline/                      Dataset preparation and sequence-demo training scripts
 data/raw/, data/processed/          Separate research corpora and derived outputs
-models/gru-sequence-demo.pt         Synthetic GRU teaching checkpoint
+models/*-sequence-demo.pt           Synthetic CNN/RNN/GRU/LSTM teaching checkpoints
 docs/                               Architecture, demo, datasets, limitations, evaluation
 ```
 
