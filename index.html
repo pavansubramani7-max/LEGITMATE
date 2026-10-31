@@ -673,6 +673,7 @@ body{font-size:16px;}
 .lab-hero h2{font-size:clamp(22px,3vw,32px);margin:5px 0 8px;color:#fff}.lab-hero p{max-width:700px;color:#d2dce8;font-size:13px;line-height:1.7}.lab-kicker{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#e8cda9}
 .lab-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.lab-stat{padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:11px;background:rgba(255,255,255,.07)}.lab-stat strong{display:block;font-size:20px;color:#fff}.lab-stat span{font-size:10px;color:#d1dbea}
 .lab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}.lab-card{min-width:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden}.lab-card-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.lab-card-head h2{font-size:15px;margin:0;color:var(--ink)}.lab-card-body{padding:16px 18px}.lab-card-body textarea{width:100%;min-height:110px;resize:vertical;padding:12px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font:13px/1.65 'Times New Roman',serif}.lab-form-row{display:flex;gap:8px;align-items:center;margin-top:10px}.lab-form-row .btn{white-space:nowrap}.lab-subtitle{font-size:10px;color:var(--muted);line-height:1.6;margin:6px 0 12px}.lab-output{display:grid;gap:12px;margin-top:14px}.lab-stat-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.lab-stat-card{padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--surface-soft)}.lab-stat-card strong{display:block;font-size:18px;color:var(--navy)}.lab-stat-card span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.lab-chip-wrap{display:flex;flex-wrap:wrap;gap:5px}.lab-chip{display:inline-flex;gap:5px;align-items:center;padding:5px 8px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink-soft);font-size:10px}.lab-chip b{color:var(--accent-hover)}.lab-list{display:grid;gap:6px}.lab-row{display:flex;justify-content:space-between;gap:12px;padding:7px 9px;border-radius:7px;background:var(--surface-soft);font-size:11px}.lab-row span:last-child{color:var(--muted);text-align:right}.lab-tables{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.lab-table-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 7px}.lab-model-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.lab-model{padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-soft)}.lab-model strong{display:block;font-size:11px;color:var(--ink)}.lab-model p{font-size:10px;line-height:1.5;color:var(--muted);margin:6px 0}.lab-model .badge{display:inline-block}.lab-note{font-size:10px;color:var(--muted);line-height:1.6;padding:10px 12px;border-left:2px solid var(--accent);background:var(--accent-wash);border-radius:0 8px 8px 0}
+.lab-model-status{display:inline-flex;margin:5px 0;padding:4px 7px;border-radius:999px;background:#edf4ee;color:#285b37;font-size:9px;font-weight:700;letter-spacing:.03em}.lab-model-status.runtime{background:#fff4df;color:#805719}.lab-model-status.missing{background:#f7eaea;color:#8a3d3d}.lab-model-action{margin-top:4px;padding:6px 8px;font-size:10px}.lab-data-state{display:inline-flex;margin:3px 0;padding:4px 7px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink-soft);font-size:9px;font-weight:700}.lab-pipeline-banner{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:linear-gradient(120deg,#f7f3ed,#fff);color:var(--ink-soft);font-size:11px;line-height:1.55}.lab-pipeline-banner strong{color:var(--navy)}
 
 /* cit-chip clickable */
 .cit-chip{cursor:pointer;transition:all var(--t);}
@@ -2245,6 +2246,17 @@ function labRows(items, leftKey, rightKey, rightSuffix = '') {
   return `<div class="lab-list">${items.slice(0, 16).map(x => `<div class="lab-row"><span>${esc(x[leftKey])}</span><span>${esc(x[rightKey])}${rightSuffix}</span></div>`).join('')}</div>`;
 }
 
+async function copyNlpSetup(button) {
+  const command = button?.dataset?.setup || '';
+  if (!command.trim()) return;
+  try {
+    await navigator.clipboard.writeText(command);
+    showToast('Setup steps copied', 'Paste them into PowerShell from the LEGITMATE project folder, then restart the app to refresh model readiness.');
+  } catch (_) {
+    showToast('Clipboard unavailable', 'Use the model setup steps shown on this card in a local terminal.');
+  }
+}
+
 async function loadNlpLab() {
   const target = document.getElementById('nlpCapabilities');
   if (!target) return;
@@ -2252,9 +2264,20 @@ async function loadNlpLab() {
     const r = await apiFetch('/api/nlp-lab/status');
     const d = await r.json();
     const working = (d.working_now || []).map(x => `<div class="lab-model"><strong>${esc(x.name)}</strong><p>${esc(x.detail)}</p><span class="badge badge-local">Ready locally</span></div>`).join('');
-    const optional = (d.optional_models || []).map(x => `<div class="lab-model"><strong>${esc(x.name)}</strong><p>${esc(x.detail)}</p><span class="badge ${x.ready ? 'badge-local' : 'badge-proto'}">${x.ready ? 'Runtime present · model/task not confirmed' : 'Setup needed'}</span></div>`).join('');
-    const datasets = (d.research_datasets || []).map(x => `<div class="lab-model"><strong>${esc(x.name)}</strong><p><b>${Number(x.records).toLocaleString()}</b> ${esc(x.unit)} · ${esc(x.license)}</p><p>${esc(x.detail)}</p></div>`).join('');
-    target.innerHTML = `<h3 class="lab-table-title">Available demonstrations</h3><div class="lab-model-grid">${working}</div><h3 class="lab-table-title" style="margin-top:18px">Advanced model integrations</h3><div class="lab-model-grid">${optional}</div><h3 class="lab-table-title" style="margin-top:18px">Kaggle research datasets · separate from your documents</h3><div class="lab-model-grid">${datasets}</div>`;
+    const labels = {active_pipeline:'Active local pipeline',runtime_only:'Runtime only · no connected task',not_installed:'Runtime not installed'};
+    const optional = (d.optional_models || []).map(x => {
+      const state = x.state || (x.runtime ? 'runtime_only' : 'not_installed');
+      const className = state === 'active_pipeline' ? '' : state === 'runtime_only' ? 'runtime' : 'missing';
+      const modelLine = x.model_name ? `<p><b>Language model:</b> ${esc(x.model_name)} · ${x.checkpoint ? 'loaded' : 'not loaded'}</p>` : `<p><b>Runtime:</b> ${x.runtime ? 'installed' : 'not installed'} &nbsp; <b>Checkpoint:</b> ${x.checkpoint ? 'present' : 'not confirmed'} &nbsp; <b>Task:</b> ${x.task_connected ? 'connected' : 'not connected'}</p>`;
+      const setup = x.setup_command ? `<button class="btn btn-secondary lab-model-action" type="button" data-setup="${esc(x.setup_command)}" onclick="copyNlpSetup(this)">Copy setup / next steps</button>` : '';
+      return `<article class="lab-model"><strong>${esc(x.name)}</strong><span class="lab-model-status ${className}">${esc(labels[state] || 'Needs review')}</span><p>${esc(x.detail)}</p>${modelLine}${setup}</article>`;
+    }).join('');
+    const datasets = (d.research_datasets || []).map(x => {
+      const count = Number(x.records || 0) > 0 ? `${Number(x.records).toLocaleString()} ${esc(x.unit)}` : `Count not prepared`;
+      const prepare = x.setup_command ? `<button class="btn btn-secondary lab-model-action" type="button" data-setup="${esc(x.setup_command)}" onclick="copyNlpSetup(this)">Copy preparation command</button>` : '';
+      return `<article class="lab-model"><strong>${esc(x.name)}</strong><span class="lab-data-state">${esc(x.local_state || 'Local files not checked')}</span><p><b>${count}</b> · ${esc(x.license)}</p>${x.splits?.length ? `<p><b>Split files:</b> ${esc(x.splits.join(', '))}</p>` : ''}<p>${esc(x.detail)}</p>${prepare}</article>`;
+    }).join('');
+    target.innerHTML = `<h3 class="lab-table-title">Available demonstrations</h3><div class="lab-model-grid">${working}</div><h3 class="lab-table-title" style="margin-top:18px">Advanced model integrations · runtime, checkpoint, and task shown separately</h3><div class="lab-model-grid">${optional}</div><h3 class="lab-table-title" style="margin-top:18px">Kaggle research datasets · isolated from uploaded legal documents</h3><p class="lab-subtitle">Local file status is checked separately from the published dataset counts. These corpora do not enter LEGITMATE document search or generated legal answers.</p><div class="lab-model-grid">${datasets}</div>`;
   } catch (e) { target.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`; }
 }
 
@@ -2393,8 +2416,10 @@ document.getElementById('nlpAnalyzeForm').addEventListener('submit', async e => 
     const tokenRows = (d.tokens || []).slice(0,70).map(t => `<span class="lab-chip"><b>${esc(t.pos)}</b>${esc(t.text)}<span>→ ${esc(t.lemma)}</span></span>`).join('');
     const entityRows = (d.entities || []).map(x => `<div class="lab-row"><span>${esc(x.value)} <small>· ${esc(x.kind)}</small></span><span>${esc(x.evidence)}</span></div>`).join('') || '<p class="lab-subtitle">No entity candidates were detected.</p>';
     const scriptRows = (d.scripts || []).map(x => `<span class="lab-chip">${esc(x.name)} <b>${x.count}</b></span>`).join('');
+    const methods = d.methods || {};
     out.innerHTML = `<div class="lab-stat-cards"><div class="lab-stat-card"><strong>${Number(d.token_count)}</strong><span>Tokens</span></div><div class="lab-stat-card"><strong>${Number(d.unique_terms)}</strong><span>Unique terms</span></div><div class="lab-stat-card"><strong>${esc(d.language?.label || 'Unknown')}</strong><span>Language estimate</span></div><div class="lab-stat-card"><strong>${Number(d.perplexity?.bigram || 0)}</strong><span>Bigram perplexity*</span></div></div>
-      <div><h3 class="lab-table-title">Token → approximate lemma · rule-based POS</h3><div class="lab-chip-wrap">${tokenRows || '<span class="lab-subtitle">No tokens found.</span>'}</div></div>
+      <div class="lab-pipeline-banner"><strong>Active pipeline:</strong> ${esc(methods.linguistic_pipeline || 'Not reported')} · <strong>POS:</strong> ${esc(methods.pos || 'Not reported')} · <strong>Lemma:</strong> ${esc(methods.lemmatization || 'Not reported')}<br>${esc(methods.linguistic_note || '')} Auto language estimate: ${esc(d.language?.label || 'Unknown')} (${Math.round(Number(d.language?.confidence || 0) * 100)}% estimated confidence).</div>
+      <div><h3 class="lab-table-title">Token → lemma and POS from the active pipeline</h3><div class="lab-chip-wrap">${tokenRows || '<span class="lab-subtitle">No tokens found.</span>'}</div></div>
       <div class="lab-tables"><div><h3 class="lab-table-title">Bag-of-Words counts</h3>${labRows(d.bow,'term','count')}</div><div><h3 class="lab-table-title">TF-IDF terms</h3>${labRows((d.tfidf||[]).map(x=>({term:x.term,score:x.tfidf})),'term','score')}</div></div>
       <div class="lab-tables"><div><h3 class="lab-table-title">Common bigrams</h3>${labRows(d.bigrams,'text','count')}</div><div><h3 class="lab-table-title">Entity candidates · human review required</h3><div class="lab-list">${entityRows}</div></div></div>
       <div><h3 class="lab-table-title">Writing-system profile</h3><div class="lab-chip-wrap">${scriptRows || '<span class="lab-subtitle">No script characters found.</span>'}</div></div>

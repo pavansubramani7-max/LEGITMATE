@@ -13,7 +13,7 @@ The entered text for these two local demonstrations is processed by the LEGITMAT
 ## What the local demos mean
 
 - **Tokenization:** splits Unicode text into word/number tokens and punctuation.
-- **POS and lemma:** a small transparent rule set supplies teaching approximations. It is not a trained POS model or a full morphological lemmatizer; inspect errors in the output.
+- **POS and lemma:** the analyzer estimates language automatically. When the matching local spaCy package and model are installed, the output uses that trained tokenizer/POS/lemmatizer pipeline and names the model. Otherwise it falls back to LEGITMATE's transparent rule estimates and marks that fallback in the result. Current optional spaCy model mapping covers English, Spanish, French, German, Portuguese, and Italian; an uncertain/unsupported language uses the rule path. No model is downloaded during analysis.
 - **NER:** reuses LEGITMATE's existing rule/spaCy-optional entity extraction. Entities are candidates, not verified facts.
 - **Bag-of-Words:** counts terms in the entered sample.
 - **TF-IDF:** calculates sample term weights using the sample plus up to 300 indexed passages as the reference corpus. A small corpus makes weights unstable.
@@ -21,6 +21,19 @@ The entered text for these two local demonstrations is processed by the LEGITMAT
 - **BLEU-4 and ROUGE-L:** sentence-level, smoothed BLEU and token-level longest-common-subsequence ROUGE-L. The score measures textual overlap, not legal correctness or evidence quality.
 - **GRU sequence classifier + additive attention:** classifies one short sentence into one of six broad teaching topics (party, date, amount, obligation, property, or other) and displays the model's token-attention weights. It was CPU-trained on 72 hand-labeled synthetic snippets and evaluated on 12 separately held-out synthetic examples. The current recorded validation accuracy is 0.750. This set is too small to establish reliable generalization; model scores and attention weights are not legal confidence, evidence, or human-readable explanations. The model is not connected to uploaded-document answers or retrieval.
 - **Indic script profile:** counts writing-system characters and uses LEGITMATE's lightweight language estimate. This is not full IndicNLP processing or reliable translation.
+
+### Optional local linguistic pipeline
+
+The Model and Toolkit Readiness cards distinguish the package runtime from an installed model checkpoint and from a task connected in LEGITMATE. To add the English spaCy pipeline to the active virtual environment, run these commands from the project folder in PowerShell:
+
+```powershell
+python -m pip install spacy
+python -m spacy download en_core_web_sm
+```
+
+Restart LEGITMATE afterward and refresh NLP Studio. Analysis reports the selected spaCy model or explicitly reports the rule fallback. The optional installation does not download models automatically, change uploaded files, or promote extracted entities to verified facts.
+
+Other cards provide copyable setup/next-step commands. Installing gensim, PyTorch, Whisper, Transformers, or IndicNLP does not by itself create a connected model task. The app reports missing checkpoints and tasks separately; no architecture is presented as working just because its package is installed.
 
 To reproducibly retrain the teaching checkpoint with the fixed seed, run:
 
@@ -35,9 +48,9 @@ The script saves `models/gru-sequence-demo.pt`. It uses only the synthetic train
 | Syllabus area | Current LEGITMATE status |
 | --- | --- |
 | Module 1: tokenization and NER | Demonstrated in the Studio and existing document extraction. |
-| Module 1: POS and lemmatization | Rule-based teaching approximation only; a trained linguistic pipeline remains future work. |
+| Module 1: POS and lemmatization | Optional installed spaCy model for supported detected languages; transparent rule fallback when the model is missing or language is unsupported. |
 | Module 1: N-grams, perplexity, BoW, TF-IDF | Local demonstrations available; meaningful perplexity needs a separate training/test corpus. |
-| Module 1: Word2Vec, GloVe, FastText | Not trained or compared yet. The Studio reports whether the optional gensim package exists; that does not imply models are trained. |
+| Module 1: Word2Vec, GloVe, FastText | No connected vector checkpoint or similarity task. The Studio distinguishes an optional gensim runtime from actual embeddings. |
 | Module 2: GRU and attention | A small CPU-trained synthetic teaching model is available in NLP Studio, with token-attention weights. It is not a legal classifier. |
 | Module 2: CNN, vanilla RNN, LSTM | Not implemented. PyTorch being installed is only a runtime prerequisite. |
 | Module 2: BLEU, ROUGE, precision, recall, F1 | Text-overlap demo available. Production evaluation still needs a curated reference set and task-specific metrics. |

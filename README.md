@@ -160,13 +160,13 @@ E5 and the cross-encoder are pretrained retrieval models. LEGITMATE has no valid
 
 The NLP Studio contains these local demonstrations:
 
-- Unicode tokenization, transparent rule-based POS/lemma approximations, and legal entity candidates.
+- Unicode tokenization and legal entity candidates, plus automatic language selection for the optional spaCy POS/lemma pipeline. Each analysis reports whether it used a trained installed spaCy model or the transparent rule fallback.
 - Bag-of-Words, TF-IDF, bigrams, and smoothed unigram/bigram perplexity.
 - BLEU-4, ROUGE-L, precision, recall, and F1 from user-provided reference/candidate text. These measure text overlap, not legal correctness.
 - Indic writing-system counts and a lightweight language estimate.
 - A GRU sequence classifier with additive attention. It predicts one broad topic cue: party, date, amount, obligation, property, or other. The model was CPU-trained on 72 synthetic classroom snippets, with 12 separate synthetic validation examples. The recorded validation accuracy is 0.750. Its scores and attention weights are not legal confidence, explanations, evidence, or source citations.
 
-The GRU model is not used for document answers. CNN, vanilla RNN, LSTM, Word2Vec/GloVe/FastText, separate ELMo/BERT/RoBERTa/ALBERT/GPT/T5 NLP Studio tasks, legal-domain fine-tuning, Whisper/Wav2Vec, CLIP, full IndicNLP, translation, and production abstractive summarization remain incomplete. See [docs/nlp-studio.md](docs/nlp-studio.md) for the module-by-module map.
+The GRU model is not used for document answers. CNN, vanilla RNN, LSTM, Word2Vec/GloVe/FastText checkpoints and tasks, separate ELMo/BERT/RoBERTa/ALBERT/GPT/T5 NLP Studio tasks, legal-domain fine-tuning, Whisper/Wav2Vec, CLIP, full IndicNLP, translation, and production abstractive summarization remain incomplete. The Studio now separates runtime availability, checkpoint presence, and connected tasks, and gives copyable next steps where setup is meaningful. See [docs/nlp-studio.md](docs/nlp-studio.md) for the module-by-module map.
 
 To retrain the GRU teaching model with its fixed seed:
 

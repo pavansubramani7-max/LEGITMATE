@@ -12,6 +12,7 @@ from typing import Any
 from app.nlp.language import detect_language
 from app.store import load
 from app.extraction.entities import extract_entities
+from app.extraction.ner_model import get_nlp_for_language, spacy_model_name
 from app.config import ROOT
 
 _TOKEN_RE = re.compile(r"\w+(?:['’.-]\w+)*|[^\w\s]", re.UNICODE)
@@ -84,13 +85,34 @@ def _perplexity(tokens: list[str]) -> dict[str, float | int]:
 
 def analyze_text(text: str, *, corpus_chunks: list[str] | None = None) -> dict[str, Any]:
     sample = text.strip()[:10000]
-    tokens = _TOKEN_RE.findall(sample)
-    previous = ""
+    language = detect_language(sample)
+    language_code = str(language.get("code", "und"))
+    language_confidence = float(language.get("confidence", 0) or 0)
+    spacy_model = spacy_model_name(language_code) if language_confidence >= 0.55 else None
+    spacy_nlp = get_nlp_for_language(language_code) if spacy_model else None
     tagged = []
-    for token in tokens[:500]:
-        tag = _pos(token, previous)
-        tagged.append({"text": token, "lemma": _lemma(token), "pos": tag})
-        previous = token
+    if spacy_nlp is not None:
+        spacy_doc = spacy_nlp(sample)
+        tokens = [token.text for token in spacy_doc]
+        for token in spacy_doc:
+            if len(tagged) >= 500:
+                break
+            lemma = (token.lemma_ or token.text).strip()
+            tagged.append({"text": token.text, "lemma": lemma, "pos": token.pos_ or "X"})
+        linguistic_pipeline = f"spaCy · {spacy_model}"
+        linguistic_note = "Trained local spaCy pipeline selected from the automatic language estimate. Review language estimate and model coverage; entity/fact output still needs human review."
+    else:
+        tokens = _TOKEN_RE.findall(sample)
+        previous = ""
+        for token in tokens[:500]:
+            tag = _pos(token, previous)
+            tagged.append({"text": token, "lemma": _lemma(token), "pos": tag})
+            previous = token
+        linguistic_pipeline = "LEGITMATE transparent rules"
+        if not spacy_model:
+            linguistic_note = "No compatible spaCy model is selected for this language estimate; POS and lemma values are rule-based teaching approximations."
+        else:
+            linguistic_note = f"{spacy_model} is not installed or could not load; POS and lemma values are rule-based teaching approximations."
     terms = [t.casefold() for t in tokens if any(c.isalnum() for c in t)]
     counts = Counter(terms)
     if corpus_chunks is None:
@@ -118,7 +140,7 @@ def analyze_text(text: str, *, corpus_chunks: list[str] | None = None) -> dict[s
             name = unicodedata.name(char, "UNKNOWN").split()[0]
             scripts[name] += 1
     return {
-        "language": detect_language(sample),
+        "language": language,
         "token_count": len(tokens),
         "unique_terms": len(vocab),
         "tokens": tagged,
@@ -128,8 +150,15 @@ def analyze_text(text: str, *, corpus_chunks: list[str] | None = None) -> dict[s
         "perplexity": _perplexity(tokens),
         "entities": [{"kind": i["kind"], "value": i["value"], "evidence": i["context"]} for i in entities[:30]],
         "scripts": [{"name": k, "count": v} for k,v in scripts.most_common(8)],
-        "methods": {"tokenization": "Unicode-aware rule tokenizer", "pos": "Lightweight rule-based POS estimate", "lemmatization": "Rule-based lemma approximation", "tfidf_corpus_docs": len(docs)},
-        "disclaimer": "POS tags and lemmas are teaching approximations, not a trained linguistic pipeline. Extracted names and claims need human review.",
+        "methods": {
+            "tokenization": "spaCy tokenizer" if spacy_nlp is not None else "Unicode-aware rule tokenizer",
+            "pos": "spaCy trained POS pipeline" if spacy_nlp is not None else "Lightweight rule-based POS estimate",
+            "lemmatization": "spaCy trained lemmatizer" if spacy_nlp is not None else "Rule-based lemma approximation",
+            "linguistic_pipeline": linguistic_pipeline,
+            "linguistic_note": linguistic_note,
+            "tfidf_corpus_docs": len(docs),
+        },
+        "disclaimer": "The active linguistic pipeline is reported per analysis. Rule output is a teaching approximation; spaCy output remains model-derived and needs human review. Extracted names and claims are candidates, not verified findings.",
     }
 
 
@@ -166,7 +195,15 @@ def evaluate_text(reference: str, candidate: str) -> dict[str, Any]:
 
 
 def capability_status() -> dict[str, Any]:
-    available = lambda name: importlib.util.find_spec(name) is not None
+    def available(name: str) -> bool:
+        try:
+            return importlib.util.find_spec(name) is not None
+        except (ImportError, ValueError, AttributeError):
+            return False
+
+    spacy_model = spacy_model_name("en")
+    spacy_runtime = available("spacy")
+    spacy_pipeline = get_nlp_for_language("en") if spacy_runtime else None
     report_path = ROOT / "data" / "processed" / "kaggle_legal" / "dataset_report.json"
     report: dict[str, Any] = {}
     try:
@@ -181,18 +218,31 @@ def capability_status() -> dict[str, Any]:
         cuad_stats = {}
     iclec = report.get("iclec", {})
     open_nyaya = report.get("opennyaya", {})
+    processed_cuad = ROOT / "data" / "processed" / "cuad"
+    raw_qa = ROOT / "data" / "raw" / "indqa" / "legal_qa.csv"
+    prepared_qa = ROOT / "data" / "processed" / "kaggle_legal" / "indian_legal_qa"
+    raw_opennyaya = ROOT / "data" / "raw" / "opennyaya" / "nyai-supreme-court-clean"
+    raw_iclec = ROOT / "data" / "raw" / "iclec" / "indian_supreme_court_judgments.csv"
+    prepared_iclec = ROOT / "data" / "processed" / "kaggle_legal" / "iclec" / "judgments.jsonl.gz"
+    raw_cuad = ROOT / "data" / "raw" / "cuad" / "legalbenchrag_cuad.parquet"
+
+    def split_files(folder, names=("train", "val", "test")) -> list[str]:
+        return [name for name in names if (folder / f"{name}.jsonl").is_file()]
+
+    cuad_splits = split_files(processed_cuad)
+    qa_splits = split_files(prepared_qa)
     research_datasets = [
-        {"name": "LegalBenchRAG · CUAD", "records": int(cuad_stats.get("total_pairs", 0)), "unit": "query/evidence pairs", "license": "CC BY 4.0", "detail": "Contract retrieval benchmark; existing query-level train/validation/test splits are preserved."},
-        {"name": "Indian Legal QA 10K", "records": int(qa.get("prepared_pairs", 0)), "unit": "prepared Q/A pairs", "license": "CC BY 4.0", "detail": "Case-grouped split. Answers are weak labels, not verified evidence passages."},
-        {"name": "OpenNyaya judgments", "records": int(open_nyaya.get("judgment_files", 0)), "unit": "judgment files", "license": "CC BY 4.0", "detail": "Separate legal-language research corpus; OCR artifacts are possible and files are not injected into document answers."},
-        {"name": "ICLEC", "records": int(iclec.get("judgment_rows", 0)), "unit": "judgment rows", "license": "CC0-1.0", "detail": "Case-grouped judgment corpus; optional metadata fields are sparse."},
+        {"name": "LegalBenchRAG · CUAD", "records": int(cuad_stats.get("total_pairs", 0)), "unit": "query/evidence pairs", "license": "CC BY 4.0", "local_state": "Prepared splits available" if len(cuad_splits) == 3 else "Raw source available · prepare splits" if raw_cuad.is_file() else "Source/splits not found", "splits": cuad_splits, "setup_command": "python data/pipeline/prepare_cuad.py" if raw_cuad.is_file() and len(cuad_splits) != 3 else "", "detail": "Contract retrieval benchmark; query-level train/validation/test splits are preserved."},
+        {"name": "Indian Legal QA 10K", "records": int(qa.get("prepared_pairs", 0)), "unit": "prepared Q/A pairs", "license": "CC BY 4.0", "local_state": "Prepared splits available" if len(qa_splits) == 3 else "Raw source available · prepare splits" if raw_qa.is_file() else "Source/splits not found", "splits": qa_splits, "setup_command": "python data/pipeline/prepare_kaggle_legal.py" if raw_qa.is_file() and len(qa_splits) != 3 else "", "detail": "Case-grouped split. Answers are weak labels, not verified evidence passages."},
+        {"name": "OpenNyaya judgments", "records": int(open_nyaya.get("judgment_files", 0)), "unit": "judgment files", "license": "CC BY 4.0", "local_state": "Raw research corpus available" if raw_opennyaya.is_dir() else "Source not found", "splits": [], "detail": "Separate legal-language research corpus; OCR artifacts are possible and files are not injected into document answers."},
+        {"name": "ICLEC", "records": int(iclec.get("judgment_rows", 0)), "unit": "judgment rows", "license": "CC0-1.0", "local_state": "Prepared corpus available" if prepared_iclec.is_file() else "Raw source available · prepare splits" if raw_iclec.is_file() else "Source/splits not found", "splits": [], "setup_command": "python data/pipeline/prepare_kaggle_legal.py" if raw_iclec.is_file() and not prepared_iclec.is_file() else "", "detail": "Case-grouped research corpus; optional metadata fields are sparse."},
     ]
     syllabus_modules = [
         {
             "id": "module-1", "title": "Foundations of NLP & Embeddings", "coverage": "Partial",
             "topics": [
-                {"name": "Tokenization, POS, lemmatization", "status": "Simplified demo", "detail": "Unicode tokenization works. POS and lemma output uses transparent rules, not a trained linguistic model."},
-                {"name": "NER", "status": "Partial", "detail": "Legal entity candidates use the current extractor; spaCy is not installed in this environment."},
+                {"name": "Tokenization, POS, lemmatization", "status": "Optional trained pipeline + transparent fallback", "detail": "The analyzer auto-detects language and uses a compatible installed spaCy pipeline where available; otherwise it labels its rule-based teaching estimates."},
+                {"name": "NER", "status": "Optional spaCy + legal regex fallback", "detail": "spaCy entities are used when the compatible English pipeline loads; property identifiers and the fallback extractor use legal-specific rules. Results remain candidates."},
                 {"name": "N-grams and perplexity", "status": "Demo available", "detail": "Unigram/bigram counts and smoothed perplexity run on the entered sample, not a held-out language corpus."},
                 {"name": "BoW and TF-IDF", "status": "Demo available", "detail": "Calculated locally for the entered text and a bounded set of indexed passages."},
                 {"name": "Word2Vec, GloVe, FastText", "status": "Not implemented", "detail": "No trained or pretrained model for these embedding families is connected."},
@@ -245,12 +295,12 @@ def capability_status() -> dict[str, Any]:
             {"name": "Indic script profile", "status": "ready", "detail": "Counts Unicode writing systems and estimates common script; not a full IndicNLP pipeline."},
         ],
         "optional_models": [
-            {"name": "spaCy POS + lemmatization", "ready": available("spacy"), "detail": "Optional install and language model required."},
-            {"name": "Word2Vec / GloVe / FastText", "ready": available("gensim"), "detail": "Optional embedding toolkit; current demo does not claim these are trained."},
-            {"name": "CNN / vanilla RNN / LSTM", "ready": available("torch"), "detail": "PyTorch runtime exists, but these architectures have no connected task model in LEGITMATE."},
-            {"name": "Whisper speech recognition", "ready": available("faster_whisper") or available("whisper"), "detail": "ASR package and model weights required before transcription."},
-            {"name": "CLIP image-text", "ready": available("transformers") and available("torch"), "detail": "Runtime packages present; a compatible CLIP checkpoint must still be available."},
-            {"name": "IndicNLP tools", "ready": available("indicnlp"), "detail": "Indic script profiling works now; IndicNLP-specific normalization/tokenizers require the toolkit."},
+            {"name": "spaCy POS + lemmatization", "state": "active_pipeline" if spacy_pipeline is not None else "runtime_only" if spacy_runtime else "not_installed", "runtime": spacy_runtime, "checkpoint": bool(spacy_pipeline), "task_connected": bool(spacy_pipeline), "model_name": spacy_model, "detail": "English pipeline can run POS, lemmatization, and tokenization on detected English text." if spacy_pipeline is not None else "A spaCy package alone is insufficient; install the language model to activate trained POS and lemma output." if spacy_runtime else "Install spaCy and its English model to activate the trained pipeline.", "setup_command": "python -m pip install spacy\npython -m spacy download en_core_web_sm" if spacy_pipeline is None else ""},
+            {"name": "Word2Vec / GloVe / FastText", "state": "runtime_only" if available("gensim") else "not_installed", "runtime": available("gensim"), "checkpoint": False, "task_connected": False, "detail": "No trained/pretrained vector checkpoint or nearest-neighbour exercise is connected; gensim installation alone does not activate embeddings.", "setup_command": "python -m pip install gensim\n# Then train on an approved research corpus or provide a licensed pretrained vector file." if not available("gensim") else "# No connected model or exercise yet; the installed package alone is not an embedding model."},
+            {"name": "CNN / vanilla RNN / LSTM", "state": "runtime_only" if available("torch") else "not_installed", "runtime": available("torch"), "checkpoint": False, "task_connected": False, "detail": "PyTorch runtime status is separate from architecture training. LEGITMATE has no trained CNN, RNN, or LSTM task checkpoint.", "setup_command": "# No setup command: a task, labeled data, training, and held-out evaluation must be implemented first."},
+            {"name": "Whisper speech recognition", "state": "runtime_only" if available("faster_whisper") or available("whisper") else "not_installed", "runtime": available("faster_whisper") or available("whisper"), "checkpoint": False, "task_connected": False, "detail": "No audio upload/transcription route or downloaded speech checkpoint is connected. Audio stays out of legal document processing.", "setup_command": "python -m pip install faster-whisper\n# A compatible speech model must be downloaded before transcription; no ASR task is connected yet." if not available("faster_whisper") else "# Runtime may exist; a local model and a reviewed transcription workflow are still absent."},
+            {"name": "CLIP image-text", "state": "runtime_only" if available("transformers") and available("torch") else "not_installed", "runtime": available("transformers") and available("torch"), "checkpoint": False, "task_connected": False, "detail": "Transformers and PyTorch are runtime dependencies only; no CLIP checkpoint or document-image matching task is connected.", "setup_command": "python -m pip install transformers\n# Add a compatible CLIP checkpoint and an image-text evaluation before enabling the task." if not (available("transformers") and available("torch")) else "# Runtime exists; no compatible local CLIP checkpoint or image-text task is connected."},
+            {"name": "IndicNLP tools", "state": "runtime_only" if available("indicnlp") else "not_installed", "runtime": available("indicnlp"), "checkpoint": False, "task_connected": False, "detail": "Automatic script profiling is active. IndicNLP normalization/tokenization is not connected and requires its package plus language resources.", "setup_command": "python -m pip install indic-nlp-library\n# Add Indic language resources and a reviewed normalization/tokenization exercise." if not available("indicnlp") else "# Toolkit runtime exists; IndicNLP-specific processing is not connected."},
         ],
         "research_datasets": research_datasets,
         "syllabus_modules": syllabus_modules,
